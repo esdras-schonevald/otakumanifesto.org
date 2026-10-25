@@ -1,100 +1,17 @@
 ---
 import Doc from '../layouts/Doc.astro';
+import HomeBody from '../components/HomeBody.astro';
+import { home } from '../i18n/home';
+
+const copy = home.en;
 ---
 
 <Doc
   title="OTAKU — Fluid Structure Design"
-  kicker="A philosophy for object-oriented software"
-  description="OTAKU is a language-agnostic discipline for object-oriented design: five pillars, three repository shapes, and a guide to applying them in PHP, C#, Java and C++."
+  kicker={copy.kicker}
+  description="OTAKU is a language-agnostic discipline for object-oriented design: five pillars, forty measurable rules, three repository shapes, and a guide in PHP, C#, Java, C++ and TypeScript."
   path="/"
   bare
 >
-  <div class="hero">
-    <div class="kicker">A philosophy for object-oriented software</div>
-
-    <p class="hero__term">
-      <span class="prompt">otaku@manifesto</span>:~$ cat OTAKU.md
-    </p>
-
-    <h1>Structure is a decision,<br />not an accident.</h1>
-
-    <p class="hero__lead">
-      OTAKU is a philosophy for object-oriented software. Five constraints decide
-      what code is allowed to exist; three shapes decide how repositories are
-      organized. Nothing here belongs to a language — only to the paradigm.
-    </p>
-
-    <ul class="actions">
-      <li><a class="primary" href="/manifesto">Read the manifesto</a></li>
-      <li><a href="/guide">Open the guide</a></li>
-      <li><a href="/shapes">The three shapes</a></li>
-    </ul>
-  </div>
-
-  <h2>Why this exists</h2>
-
-  <p>
-    Frameworks are excellent until you need to replace one piece — and then demand
-    that you replace all of them. The usual escape is a rewrite, which replaces one
-    set of accidental constraints with another. OTAKU is the opposite bet:
-    architecture made of parts small enough to understand in one sitting, and
-    replaceable without permission.
-  </p>
-
-  <p>
-    The name is an acronym, and also a temperament. It describes a technical
-    obsession with mastery, discipline and structural purity — the willingness to
-    delete a clever abstraction because it cannot be explained in a sentence.
-  </p>
-
-  <h2>How to read this book</h2>
-
-  <div class="cards">
-    <a class="card" href="/manifesto">
-      <span class="card__num">01</span>
-      <h3>The manifesto</h3>
-      <p>Five pillars, each with one rule. This is the constitution.</p>
-    </a>
-    <a class="card" href="/shapes">
-      <span class="card__num">02</span>
-      <h3>The three shapes</h3>
-      <p>Atom, assembly, application. Every repository is exactly one.</p>
-    </a>
-    <a class="card" href="/guide">
-      <span class="card__num">03</span>
-      <h3>The guide</h3>
-      <p>How to apply the rules, with code in PHP, C#, Java and C++.</p>
-    </a>
-  </div>
-
-  <h2>What it refuses</h2>
-
-  <ul>
-    <li>Frameworks leaking into the domain layer.</li>
-    <li>Repositories that cannot be classified as atom, assembly or application.</li>
-    <li>Abstractions created before the second real use case exists.</li>
-    <li>Code that needs a comment to explain its indentation.</li>
-    <li>Interfaces published without a contract.</li>
-  </ul>
-
-  <blockquote>
-    Write code that never needs “fixing” because it was built under absolute
-    constraint.
-  </blockquote>
-
-  <h2>Scope</h2>
-
-  <p>
-    OTAKU was born inside <a href="https://phprise.org">PHPRise</a>, but PHP is only
-    where it started. The rules are about indentation, collections, dependency
-    direction, contracts and naming — concepts every object-oriented language
-    expresses. The guide is written against <strong>PHP, C#, Java and C++</strong>,
-    and deliberately avoids idioms that only one of them can express.
-  </p>
-
-  <p>
-    If your language has classes, interfaces, exceptions and a package manager, the
-    philosophy applies. If it does not, this is not the right tool — and that is a
-    legitimate answer.
-  </p>
+  <HomeBody locale="en" />
 </Doc>

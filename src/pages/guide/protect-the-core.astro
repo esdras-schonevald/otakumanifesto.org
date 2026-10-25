@@ -85,6 +85,15 @@ public:
 
 }`;
 
+const tsPorts = String.raw`export interface Accounts {
+  get(id: AccountId): Account;
+  save(...accounts: Account[]): void;
+}
+
+export interface Ledger {
+  record(transfer: Transfer): Receipt;
+}`;
+
 const deptrac = String.raw`# deptrac.yaml
 parameters:
   paths:
@@ -153,6 +162,7 @@ Infrastructure ──────────────────▶  Domain
       { id: 'cs', label: 'C#', code: csPorts },
       { id: 'java', label: 'Java', code: javaPorts },
       { id: 'cpp', label: 'C++', code: cppPorts },
+      { id: 'ts', label: 'TypeScript', code: tsPorts },
     ]}
   />
 

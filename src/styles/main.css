@@ -601,3 +601,94 @@ th {
   .tabs__bar { display: none; }
   body { font-size: 10.5pt; background: #fff; color: #000; }
 }
+
+
+/* --- language switcher ---------------------------------------------------- */
+
+.lang {
+  margin-top: 1.6rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+  font-size: 0.82rem;
+}
+
+.lang summary {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.lang summary::-webkit-details-marker { display: none; }
+.lang summary::before { content: "▸ "; color: var(--accent); }
+.lang[open] summary::before { content: "▾ "; }
+.lang ul { list-style: none; margin: 0.6rem 0 0; padding: 0; }
+.lang li { margin-bottom: 0.15rem; }
+.lang a {
+  display: block;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.lang a:hover { background: var(--panel-2); color: var(--ink); }
+.lang a[aria-current="true"] { color: var(--accent); font-weight: 600; }
+
+.nav-fallback {
+  font-family: var(--mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  padding: 0 0.2rem;
+  margin-left: 0.35rem;
+  vertical-align: 1px;
+}
+
+@media print { .lang { display: none; } }
+
+
+/* --- rules ---------------------------------------------------------------- */
+
+.pillar__body { margin: 0.55rem 0 0; font-size: 0.9rem; color: var(--ink-soft); }
+
+.rule-group { margin-bottom: 1.9rem; }
+
+.rule-group__title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  font-size: 1rem;
+  margin-top: 2rem;
+  margin-bottom: 0.2rem;
+}
+
+.rule-group__pillar {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--accent);
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  padding: 0 0.3rem;
+}
+
+.rules {
+  margin: 0.8rem 0 0;
+  padding-left: 1.9rem;
+}
+
+.rules li {
+  margin-bottom: 0.45rem;
+  color: var(--ink-soft);
+  padding-left: 0.2rem;
+}
+
+.rules li::marker {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.78em;
+}

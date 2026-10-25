@@ -6,7 +6,7 @@ import Note from '../../components/Note.astro';
 <Doc
   title="Audit checklist"
   kicker="Track — verify"
-  description="A one-hour audit to check whether a repository actually follows OTAKU, with a scoring model and CI hooks."
+  description="A one-hour audit against the 40 OTAKU rules: cyclomatic complexity, size, naming, composition, protection, silence and contracts."
   path="/guide/checklist"
 >
   <p class="lede">
@@ -18,60 +18,75 @@ import Note from '../../components/Note.astro';
 
   <ol>
     <li>Open the repository at the default branch, with CI green or known-red.</li>
-    <li>Print the dependency graph, or generate it (<code>deptrac</code>, <code>ArchUnit</code>, <code>jdeps</code>, <code>cmake --graphviz</code>).</li>
+    <li>Run the complexity tool and export the list of methods above 5.</li>
+    <li>Generate the dependency graph (<code>deptrac</code>, <code>ArchUnit</code>, <code>jdeps</code>, <code>cmake --graphviz</code>).</li>
     <li>Time-box each section. You are collecting evidence, not fixing anything.</li>
   </ol>
 
-  <h2>Section O — Discipline</h2>
+  <h2>O — Discipline (rules 1–17)</h2>
 
   <ul class="checklist">
-    <li>No method has two levels of indentation.</li>
-    <li><code>else</code> does not appear in the codebase (search, then justify each hit).</li>
-    <li>Primitives that are validated, compared or persisted are wrapped in value objects.</li>
-    <li>Every collection field is its own class.</li>
-    <li>No call chain longer than one dot, except builders and fluent APIs.</li>
-    <li>No abbreviations in public names (<code>req</code>, <code>svc</code>, <code>cfg</code>, <code>mgr</code>).</li>
-    <li>No class over 50 lines; no package over 10 files.</li>
+    <li><strong>Complexity:</strong> no method above cyclomatic complexity 5.</li>
+    <li>No method with two levels of indentation.</li>
+    <li><code>else</code> does not appear (search, then justify each hit).</li>
+    <li><code>switch</code>/<code>case</code> does not appear.</li>
+    <li>No magic numbers or strings.</li>
+    <li>No class above 50 lines; no method above 20; no package above 10 classes.</li>
     <li>No class with more than two instance variables.</li>
-    <li>No getters, setters or public mutable properties.</li>
+    <li>No method or constructor with more than two parameters.</li>
+    <li>No interface with more than two methods.</li>
+    <li>No abbreviations in public names.</li>
+    <li>Booleans start with <code>is</code>/<code>has</code>/<code>can</code>/<code>should</code>; methods start with a verb.</li>
+    <li>Constants in <code>UPPER_SNAKE_CASE</code>; properties and methods in <code>camelCase</code>.</li>
   </ul>
 
-  <h2>Section T — Composition</h2>
+  <h2>T — Composition (rules 18–24)</h2>
 
   <ul class="checklist">
-    <li>Every use case is a class with one public method.</li>
-    <li>Dependencies arrive through the constructor, never from a container lookup.</li>
+    <li>Every collection field is its own class.</li>
+    <li>No call chain longer than one dot, except builders and fluent APIs.</li>
+    <li>No static methods except factories and pure functions.</li>
+    <li>Commands and queries are separated; value-returning methods have no side effects.</li>
+    <li>No global state or singletons; dependencies arrive through the constructor.</li>
+    <li>Use cases are classes with one public method.</li>
     <li>Wiring happens in a single composition root.</li>
-    <li>Each part can be described without the word “and”.</li>
     <li>The dependency graph has no cycles.</li>
   </ul>
 
-  <h2>Section A — Armor</h2>
+  <h2>A — Armor (rules 25–31)</h2>
 
   <ul class="checklist">
+    <li>No getters, setters or public mutable properties.</li>
+    <li>Properties are private; <code>protected</code> only for framework inheritance.</li>
+    <li>Classes are <code>final</code> or <code>sealed</code> by default.</li>
+    <li>No inheritance except framework base classes.</li>
+    <li>Inputs validated in constructors and public methods.</li>
+    <li>Preconditions fail fast, with a domain exception.</li>
+    <li>Input parameters are never mutated.</li>
     <li>No domain file imports a framework, ORM, HTTP or database package.</li>
-    <li>Domain exceptions are domain-named (<code>InsufficientFunds</code>), not technical.</li>
-    <li>Entities do not extend framework base classes.</li>
-    <li>Validation of business rules lives in the domain or value objects.</li>
     <li>An architecture test enforces the layer rule in CI.</li>
   </ul>
 
-  <h2>Section K — Silence</h2>
+  <h2>K — Silence (rules 32–36)</h2>
 
   <ul class="checklist">
-    <li>Repositories behave like collections; no query builder leaks through the port.</li>
-    <li>There is an in-memory implementation of every repository port.</li>
-    <li>Domain objects are constructible without a database or container.</li>
+    <li>Properties are immutable; methods return new instances.</li>
+    <li>Collection-returning methods return empty collections, never <code>null</code>.</li>
+    <li>Failure is explicit — Result/Either or exception — never <code>null</code>.</li>
+    <li>No hidden dependencies, magic methods or implicit conversions.</li>
+    <li>No SQL, HTTP or file paths in the domain.</li>
+    <li>Repositories behave like collections; an in-memory implementation exists.</li>
     <li>Transactions are opened by infrastructure, not by the domain.</li>
-    <li>The domain can be tested with no I/O at all.</li>
   </ul>
 
-  <h2>Section U — Contracts</h2>
+  <h2>U — Contracts (rules 37–40)</h2>
 
   <ul class="checklist">
-    <li>A published contract exists (OpenAPI/IDL) and is versioned.</li>
-    <li>Endpoint and field names match the business vocabulary.</li>
-    <li>Error responses are documented in the contract.</li>
+    <li>Primitives and strings that carry meaning are wrapped in value objects.</li>
+    <li>No <code>mixed</code>/<code>array</code>/<code>object</code> outside explicit serialization.</li>
+    <li>Every public method is declared in an interface.</li>
+    <li>Comments explain why and live in contracts.</li>
+    <li>A published contract exists (OpenAPI/IDL), is versioned and matches the vocabulary.</li>
     <li>Breaking changes are detected in CI (spec diff).</li>
     <li>No client reaches the database or an internal endpoint directly.</li>
   </ul>
@@ -82,10 +97,10 @@ import Note from '../../components/Note.astro';
     <table>
       <thead><tr><th>Score</th><th>Verdict</th><th>Action</th></tr></thead>
       <tbody>
-        <tr><td>40–44</td><td>Compliant</td><td>Keep the CI checks; re-audit quarterly.</td></tr>
-        <tr><td>30–39</td><td>Mostly compliant</td><td>Fix the failing sections in the next sprint; each failure must have an owner.</td></tr>
-        <tr><td>20–29</td><td>Partial</td><td>Pick one section per sprint. Do not start a rewrite.</td></tr>
-        <tr><td>&lt; 20</td><td>Not applied</td><td>The codebase is not OTAKU. Say so, then decide whether to migrate or not — honesty is cheaper than ceremony.</td></tr>
+        <tr><td>90–100%</td><td>Compliant</td><td>Keep the CI checks; re-audit quarterly.</td></tr>
+        <tr><td>70–89%</td><td>Mostly compliant</td><td>Fix the failing sections in the next sprint; each failure must have an owner.</td></tr>
+        <tr><td>40–69%</td><td>Partial</td><td>Pick one section per sprint. Do not start a rewrite.</td></tr>
+        <tr><td>&lt; 40%</td><td>Not applied</td><td>The codebase is not OTAKU. Say so, then decide whether to migrate — honesty is cheaper than ceremony.</td></tr>
       </tbody>
     </table>
   </div>
@@ -94,32 +109,35 @@ import Note from '../../components/Note.astro';
 
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Check</th><th>PHP</th><th>C#</th><th>Java</th><th>C++</th></tr></thead>
+      <thead><tr><th>Check</th><th>PHP</th><th>C#</th><th>Java</th><th>C++</th><th>TypeScript</th></tr></thead>
       <tbody>
         <tr>
-          <td>Style and size</td>
+          <td>Complexity ≤ 5</td>
           <td>PHP_CodeSniffer</td>
-          <td>StyleCop / Roslyn</td>
-          <td>Checkstyle</td>
+          <td>CA1502</td>
+          <td>PMD</td>
           <td>clang-tidy</td>
+          <td>ESLint <code>complexity</code></td>
         </tr>
         <tr>
-          <td>Complexity</td>
-          <td>PHPStan, PhpMetrics</td>
-          <td>Cognitive complexity analyzers</td>
-          <td>PMD</td>
-          <td>clang-tidy <code>readability-function-size</code></td>
+          <td>Size and style</td>
+          <td>PHP_CodeSniffer</td>
+          <td>StyleCop</td>
+          <td>Checkstyle</td>
+          <td>clang-tidy</td>
+          <td>ESLint</td>
         </tr>
         <tr>
           <td>Dependencies</td>
           <td>deptrac</td>
           <td>NetArchTest</td>
           <td>ArchUnit</td>
-          <td>CMake target rules</td>
+          <td>CMake targets</td>
+          <td>ts-arch</td>
         </tr>
         <tr>
           <td>Contract</td>
-          <td colspan="4">spec diff + schema validation in integration tests</td>
+          <td colspan="5">spec diff + schema validation in integration tests</td>
         </tr>
       </tbody>
     </table>
@@ -128,9 +146,9 @@ import Note from '../../components/Note.astro';
   <h2>What to do with the result</h2>
 
   <p>
-    Publish the score in the README, with the date and the audited commit. Not to
-    shame anyone — to make progress visible. A repository that goes from 22 to 33 in
-    one quarter is a success story, not a failure.
+    Publish the score in the README, with the date and the audited commit. Not to shame
+    anyone — to make progress visible. A repository that goes from 45% to 72% in one
+    quarter is a success story, not a failure.
   </p>
 
   <Note label="Rule" variant="rule">

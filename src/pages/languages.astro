@@ -6,13 +6,14 @@ import Note from '../components/Note.astro';
 <Doc
   title="Languages and tooling"
   kicker="Reference"
-  description="How the OTAKU shapes translate to PHP, C#, Java and C++, plus the tooling for each enforcement step."
+  description="How the OTAKU shapes translate to PHP, C#, Java, C++ and TypeScript, plus the tooling for each enforcement step."
   path="/languages"
 >
   <p class="lede">
     The philosophy is language-neutral; the vocabulary is not. Each ecosystem has its
     own name for a value object, its own way to express a collection, and its own tool
-    to prove that dependencies point inwards.
+    to prove that dependencies point inwards. Five languages are worked through in
+    detail; the rules are the same in all of them.
   </p>
 
   <h2>The same concepts, four vocabularies</h2>
@@ -29,6 +30,7 @@ import Note from '../components/Note.astro';
           <td><code>record</code> or <code>sealed class</code></td>
           <td><code>record</code></td>
           <td><code>class</code> + <code>operator==</code></td>
+          <td><code>class</code> + private constructor</td>
         </tr>
         <tr>
           <td>First-class collection</td>
@@ -36,6 +38,7 @@ import Note from '../components/Note.astro';
           <td>class wrapping <code>IReadOnlyList&lt;T&gt;</code></td>
           <td>class wrapping <code>List&lt;T&gt;</code></td>
           <td>class wrapping <code>std::vector&lt;T&gt;</code></td>
+          <td>class wrapping <code>readonly T[]</code></td>
         </tr>
         <tr>
           <td>Contract</td>
@@ -43,6 +46,7 @@ import Note from '../components/Note.astro';
           <td><code>interface</code></td>
           <td><code>interface</code></td>
           <td>abstract class, pure virtual</td>
+          <td><code>interface</code></td>
         </tr>
         <tr>
           <td>Domain failure</td>
@@ -50,6 +54,7 @@ import Note from '../components/Note.astro';
           <td>exception, or <code>Result&lt;T&gt;</code></td>
           <td>unchecked exception</td>
           <td>exception, or <code>std::expected</code></td>
+          <td>exception, or a <code>Result&lt;T&gt;</code> union</td>
         </tr>
         <tr>
           <td>Package boundary</td>
@@ -57,6 +62,7 @@ import Note from '../components/Note.astro';
           <td>NuGet package / project</td>
           <td>Maven module</td>
           <td>CMake target / Conan package</td>
+          <td>workspace package (npm/pnpm)</td>
         </tr>
       </tbody>
     </table>
@@ -122,13 +128,29 @@ import Note from '../components/Note.astro';
     <li><strong>Tooling:</strong> clang-tidy, include-what-you-use, CMake target visibility, sanitizers, <code>std::expected</code> for expected failures.</li>
   </ul>
 
+  <h2>TypeScript</h2>
+
+  <p>
+    TypeScript is the fifth language of the guide for a practical reason: it is where
+    most object-oriented code is written today, and it has everything the philosophy
+    needs — classes, interfaces, generics, exceptions and a package manager. The
+    language also makes two rules easy to break, so they need attention.
+  </p>
+
+  <ul>
+    <li><strong>Value objects:</strong> a class with a private constructor and static factory, because <code>readonly</code> alone does not validate.</li>
+    <li><strong>Collections:</strong> wrap <code>readonly T[]</code>; never return the internal array.</li>
+    <li><strong>Contracts:</strong> <code>interface</code> for ports; keep infrastructure types out of domain signatures.</li>
+    <li><strong>Pitfall — structural typing:</strong> two identical shapes are interchangeable. Add a brand (<code>declare const brand: unique symbol</code>) when identity matters.</li>
+    <li><strong>Pitfall — <code>any</code>:</strong> it is the local equivalent of <code>mixed</code>. Rule 38 applies: only at explicit serialization boundaries.</li>
+    <li><strong>Tooling:</strong> ESLint <code>complexity</code> and <code>max-lines-per-function</code>, <code>tsc --strict</code>, <code>ts-arch</code> for dependency rules, Vitest for tests.</li>
+  </ul>
+
   <Note label="Recommendation">
     <p>
-      <strong>TypeScript</strong> deserves the same treatment as the four above for web
-      code: it has classes, interfaces, generics and a package manager, and the same
-      rules apply almost verbatim. <strong>Kotlin</strong> and <strong>Swift</strong>
-      inherit the Java and C++ guidance respectively. None of them needs a separate
-      chapter yet — the rules do not change.
+      <strong>Kotlin</strong> and <strong>Swift</strong> inherit the Java and C++
+      guidance respectively: same rules, different punctuation. They do not need a
+      separate chapter yet — the rules do not change.
     </p>
   </Note>
 

@@ -1,0 +1,35 @@
+---
+import Doc from '../../layouts/Doc.astro';
+import ManifestoBody from '../../components/ManifestoBody.astro';
+import { manifesto } from '../../i18n/manifesto';
+import { locales } from '../../i18n/ui';
+import type { Locale } from '../../data/ruleGroups';
+
+export function getStaticPaths() {
+  return locales
+    .filter((code) => code !== 'en')
+    .map((code) => ({ params: { lang: code }, props: { lang: code } }));
+}
+
+const titles: Record<string, string> = {
+  'pt-br': 'O Manifesto OTAKU',
+  es: 'El Manifiesto OTAKU',
+  ja: 'OTAKU マニフェスト',
+  zh: 'OTAKU 宣言',
+  fr: 'Le Manifeste OTAKU',
+  it: 'Il Manifesto OTAKU',
+};
+
+const { lang } = Astro.props as { lang: Locale };
+const copy = manifesto[lang];
+---
+
+<Doc
+  title={titles[lang] ?? 'The OTAKU Manifesto'}
+  kicker={copy.kicker}
+  description={copy.lede}
+  path="/manifesto"
+  locale={lang}
+>
+  <ManifestoBody locale={lang} copy={copy} />
+</Doc>

@@ -1,21 +1,38 @@
 ---
-import { nav } from '../data/nav';
+import { navGroups, translatedPaths } from '../data/nav';
+import { ui, localePath } from '../i18n/ui';
+import type { Locale } from '../data/ruleGroups';
 
 interface Props {
   path: string;
+  locale: Locale;
 }
 
-const { path } = Astro.props;
+const { path, locale } = Astro.props;
+const strings = ui[locale];
+
+function hrefFor(target: string): string {
+  return translatedPaths.has(target) ? localePath(locale, target) : target;
+}
+
+function isTranslated(target: string): boolean {
+  return translatedPaths.has(target);
+}
 ---
 
-{nav.map((group) => (
+{navGroups.map((group) => (
   <div class="nav-group">
-    <p class="nav-group__label">{group.label}</p>
+    <p class="nav-group__label">{strings[group.key]}</p>
     <ul>
       {group.items.map((item) => (
         <li>
-          <a href={item.href} aria-current={item.href === path ? 'page' : undefined}>
-            {item.short}
+          <a
+            href={hrefFor(item.path)}
+            aria-current={item.path === path ? 'page' : undefined}
+            lang={isTranslated(item.path) ? undefined : 'en'}
+          >
+            {strings[item.key]}
+            {locale !== 'en' && !isTranslated(item.path) && <span class="nav-fallback" title="English only">EN</span>}
           </a>
         </li>
       ))}

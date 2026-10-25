@@ -76,7 +76,9 @@ import Note from '../components/Note.astro';
   <p>
     The source is public at
     <a href="https://github.com/esdras-schonevald/otakumanifesto.org">github.com/esdras-schonevald/otakumanifesto.org</a>.
-    The site is a static Astro build — no runtime, no database.
+    The site is a static Astro build — no runtime, no database. Translations live in
+    <code>src/i18n/</code>; the rules are data, so every language renders the same
+    table from the same source of truth.
   </p>
 
   <ul>
@@ -97,6 +99,7 @@ import Note from '../components/Note.astro';
     <table>
       <thead><tr><th>Version</th><th>Change</th></tr></thead>
       <tbody>
+        <tr><td>2026.10</td><td>Second edition: forty measurable rules, cyclomatic complexity as the primary metric, TypeScript, and translations into six languages.</td></tr>
         <tr><td>2026.10</td><td>First public edition outside PHPRise: five pillars, three shapes, cross-language guide.</td></tr>
         <tr><td>—</td><td>Earlier internal drafts lived inside PHPRise repositories.</td></tr>
       </tbody>

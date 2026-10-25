@@ -1,43 +1,50 @@
-export interface NavItem {
-  href: string;
-  title: string;
-  short: string;
+export interface NavLink {
+  path: string;
+  key: 'overview' | 'manifesto' | 'shapes' | 'guideIndex' | 'rules' | 'composition' | 'protect' | 'silent' | 'contracts' | 'checklist' | 'languages' | 'about';
 }
 
-export const nav: { label: string; items: NavItem[] }[] = [
+export interface NavGroup {
+  key: 'start' | 'guide' | 'reference';
+  items: NavLink[];
+}
+
+export const navGroups: NavGroup[] = [
   {
-    label: 'Start',
+    key: 'start',
     items: [
-      { href: '/', title: 'Overview', short: 'Overview' },
-      { href: '/manifesto', title: 'The OTAKU Manifesto', short: 'The manifesto' },
-      { href: '/shapes', title: 'The three shapes', short: 'The three shapes' },
+      { path: '/', key: 'overview' },
+      { path: '/manifesto', key: 'manifesto' },
+      { path: '/shapes', key: 'shapes' },
     ],
   },
   {
-    label: 'Guide',
+    key: 'guide',
     items: [
-      { href: '/guide', title: 'How to apply it', short: 'Guide index' },
-      { href: '/guide/object-calisthenics', title: 'Discipline: the nine rules', short: 'The nine rules' },
-      { href: '/guide/composition', title: 'Composition: parts and pipes', short: 'Composition' },
-      { href: '/guide/protect-the-core', title: 'Armor: protect the core', short: 'Protect the core' },
-      { href: '/guide/silent-infrastructure', title: 'Infrastructure stays silent', short: 'Silent infrastructure' },
-      { href: '/guide/contracts', title: 'Contracts and language', short: 'Contracts' },
-      { href: '/guide/checklist', title: 'Audit checklist', short: 'Checklist' },
+      { path: '/guide', key: 'guideIndex' },
+      { path: '/guide/rules', key: 'rules' },
+      { path: '/guide/composition', key: 'composition' },
+      { path: '/guide/protect-the-core', key: 'protect' },
+      { path: '/guide/silent-infrastructure', key: 'silent' },
+      { path: '/guide/contracts', key: 'contracts' },
+      { path: '/guide/checklist', key: 'checklist' },
     ],
   },
   {
-    label: 'Reference',
+    key: 'reference',
     items: [
-      { href: '/languages', title: 'Languages and tooling', short: 'Languages' },
-      { href: '/about', title: 'About, license, contributing', short: 'About' },
+      { path: '/languages', key: 'languages' },
+      { path: '/about', key: 'about' },
     ],
   },
 ];
 
-export const flat: NavItem[] = nav.flatMap((group) => group.items);
+/** Paths that exist in every locale. Everything else falls back to English. */
+export const translatedPaths = new Set(['/', '/manifesto']);
+
+export const flat = navGroups.flatMap((group) => group.items);
 
 export function neighbour(path: string) {
-  const index = flat.findIndex((item) => item.href === path);
+  const index = flat.findIndex((item) => item.path === path);
   return {
     previous: index > 0 ? flat[index - 1] : null,
     next: index >= 0 && index < flat.length - 1 ? flat[index + 1] : null,

@@ -57,6 +57,22 @@ public record Money(long cents, String currency) {
     }
 }`;
 
+const tsValue = String.raw`export class Email {
+  private constructor(private readonly value: string) {}
+
+  static fromString(value: string): Email {
+    if (!value.includes('@')) {
+      throw new Error('Invalid email address');
+    }
+
+    return new Email(value);
+  }
+
+  equals(other: Email): boolean {
+    return other.value === this.value;
+  }
+}`;
+
 const csPoco = String.raw`namespace App.Domain.Account;
 
 public sealed class Account
@@ -124,6 +140,7 @@ public sealed class Account
     tabs={[
       { id: 'cs', label: 'C# — POCO', code: csPoco },
       { id: 'java', label: 'Java — record', code: javaValue },
+      { id: 'ts', label: 'TypeScript', code: tsValue },
     ]}
   />
 

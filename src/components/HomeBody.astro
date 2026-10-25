@@ -1,0 +1,67 @@
+---
+import { home } from '../i18n/home';
+import { ui, localePath } from '../i18n/ui';
+import type { Locale } from '../data/ruleGroups';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const copy = home[locale];
+const strings = ui[locale];
+---
+
+<div class="hero">
+  <div class="kicker">{copy.kicker}</div>
+
+  <p class="hero__term">
+    <span class="prompt">otaku@manifesto</span>:~$ cat OTAKU.md
+  </p>
+
+  <h1>{copy.titleA}<br />{copy.titleB}</h1>
+
+  <p class="hero__lead">{copy.lead}</p>
+
+  <ul class="actions">
+    <li><a class="primary" href={localePath(locale, '/manifesto')}>{copy.actions.manifesto}</a></li>
+    <li><a href="/guide">{copy.actions.guide}</a></li>
+    <li><a href="/shapes">{copy.actions.shapes}</a></li>
+  </ul>
+</div>
+
+<h2>{copy.whyH}</h2>
+<p>{copy.whyP1}</p>
+<p>{copy.whyP2}</p>
+
+<h2>{copy.readH}</h2>
+<div class="cards">
+  <a class="card" href={localePath(locale, '/manifesto')}>
+    <span class="card__num">{copy.cards[0].n}</span>
+    <h3>{copy.cards[0].h}</h3>
+    <p>{copy.cards[0].p}</p>
+  </a>
+  <a class="card" href="/shapes">
+    <span class="card__num">{copy.cards[1].n}</span>
+    <h3>{copy.cards[1].h}</h3>
+    <p>{copy.cards[1].p}</p>
+  </a>
+  <a class="card" href="/guide">
+    <span class="card__num">{copy.cards[2].n}</span>
+    <h3>{copy.cards[2].h}</h3>
+    <p>{copy.cards[2].p}</p>
+  </a>
+</div>
+
+<h2>{copy.refuseH}</h2>
+<ul>
+  {copy.refusals.map((item) => <li>{item}</li>)}
+</ul>
+
+<blockquote>{copy.quote}</blockquote>
+
+<h2>{copy.scopeH}</h2>
+<p>{copy.scopeP1}</p>
+<p>{copy.scopeP2}</p>
+
+{(locale !== 'en') && <p class="note note--warn">{strings.englishOnly}</p>}

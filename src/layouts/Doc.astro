@@ -1,32 +1,43 @@
 ---
 import '../styles/main.css';
-import { neighbour, flat } from '../data/nav';
 import SideNav from '../components/SideNav.astro';
+import { neighbour, translatedPaths, flat } from '../data/nav';
+import { ui, localePath, localeNames, htmlLang, locales } from '../i18n/ui';
+import type { Locale } from '../data/ruleGroups';
 
 interface Props {
   title: string;
   kicker: string;
   description: string;
   path: string;
+  locale?: Locale;
   bare?: boolean;
 }
 
-const { title, kicker, description, path, bare = false } = Astro.props;
+const { title, kicker, description, path, locale = 'en', bare = false } = Astro.props;
+const strings = ui[locale];
 
-const rawPath = path;
-const normalizedPath = rawPath === '/' ? '/' : rawPath.replace(/\/?$/, '/');
-const canonical = new URL(normalizedPath, Astro.site);
-const current = flat.find((item) => item.href === path);
+const canonical = new URL(localePath(locale, path), Astro.site);
+const fullTitle = path === '/' ? title : `${title} — OTAKU Manifesto`;
+
+const translatedHere = translatedPaths.has(path);
 const { previous, next } = neighbour(path);
-const pageTitle = path === '/' ? title : `${title} — OTAKU Manifesto`;
+const current = flat.find((item) => item.path === path);
+
+const hrefFor = (target: string): string =>
+  translatedPaths.has(target) ? localePath(locale, target) : target;
+
+const alternates = translatedHere
+  ? locales.map((code) => ({ code, href: localePath(code, path) }))
+  : [{ code: 'en' as Locale, href: path }];
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={htmlLang[locale]}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{pageTitle}</title>
+    <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -38,9 +49,15 @@ const pageTitle = path === '/' ? title : `${title} — OTAKU Manifesto`;
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={locale.replace('-', '_')} />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+
+    {alternates.map((alternate) => (
+      <link rel="alternate" hreflang={htmlLang[alternate.code]} href={new URL(alternate.href, Astro.site)} />
+    ))}
+    <link rel="alternate" hreflang="x-default" href={new URL(path, Astro.site)} />
 
     <link rel="sitemap" href="/sitemap-index.xml" />
   </head>
@@ -48,24 +65,40 @@ const pageTitle = path === '/' ? title : `${title} — OTAKU Manifesto`;
   <body>
     <div class="shell">
       <aside class="side">
-        <a class="brand" href="/">
+        <a class="brand" href={localePath(locale, '/')}>
           <span class="brand__mark" aria-hidden="true">OTK</span>
           <span>otakumanifesto.org</span>
         </a>
 
         <div class="side__desktop">
-          <SideNav path={path} />
+          <SideNav path={path} locale={locale} />
         </div>
 
         <details class="side__mobile">
-          <summary>Contents</summary>
-          <SideNav path={path} />
+          <summary>{strings.contents}</summary>
+          <SideNav path={path} locale={locale} />
+        </details>
+
+        <details class="lang">
+          <summary>{strings.language} · {localeNames[locale]}</summary>
+          <ul>
+            {locales.map((code) => (
+              <li>
+                <a
+                  href={translatedHere ? localePath(code, path) : localePath(code, '/')}
+                  hreflang={htmlLang[code]}
+                  lang={htmlLang[code]}
+                  aria-current={code === locale ? 'true' : undefined}
+                >{localeNames[code]}</a>
+              </li>
+            ))}
+          </ul>
         </details>
       </aside>
 
       <main class="main">
         <p class="crumb">
-          <a href="/">OTAKU</a> / {current?.short ?? title}
+          <a href={localePath(locale, '/')}>OTAKU</a> / {current ? strings[current.key] : title}
         </p>
 
         {!bare && (
@@ -76,29 +109,32 @@ const pageTitle = path === '/' ? title : `${title} — OTAKU Manifesto`;
         )}
 
         <article class="prose">
+          {!translatedHere && locale !== 'en' && (
+            <p class="note note--warn">{strings.englishOnly}</p>
+          )}
           <slot />
         </article>
 
         <nav class="pager" aria-label="Chapter navigation">
           {previous ? (
-            <a href={previous.href}>
-              <span>Previous</span>
-              {previous.short}
+            <a href={hrefFor(previous.path)}>
+              <span>{strings.previous}</span>
+              {strings[previous.key]}
             </a>
           ) : <span />}
           {next ? (
-            <a class="next" href={next.href}>
-              <span>Next</span>
-              {next.short}
+            <a class="next" href={hrefFor(next.path)}>
+              <span>{strings.next}</span>
+              {strings[next.key]}
             </a>
           ) : null}
         </nav>
 
         <footer class="foot">
-          <span>OTAKU Manifesto · <a href="/about">CC BY-SA 4.0</a></span>
+          <span>OTAKU Manifesto · <a href="/about">{strings.license}</a></span>
           <span>
             <a href="https://phprise.org">PHPRise</a> ·
-            <a href="https://github.com/esdras-schonevald/otakumanifesto.org">Source</a> ·
+            <a href="https://github.com/esdras-schonevald/otakumanifesto.org">{strings.source}</a> ·
             <a href="https://github.com/esdras-schonevald">esdras-schonevald</a>
           </span>
         </footer>

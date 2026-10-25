@@ -1,0 +1,27 @@
+---
+import Doc from '../../layouts/Doc.astro';
+import HomeBody from '../../components/HomeBody.astro';
+import { home } from '../../i18n/home';
+import { locales } from '../../i18n/ui';
+import type { Locale } from '../../data/ruleGroups';
+
+export function getStaticPaths() {
+  return locales
+    .filter((code) => code !== 'en')
+    .map((code) => ({ params: { lang: code }, props: { lang: code } }));
+}
+
+const { lang } = Astro.props as { lang: Locale };
+const copy = home[lang];
+---
+
+<Doc
+  title="OTAKU — Fluid Structure Design"
+  kicker={copy.kicker}
+  description={copy.lead}
+  path="/"
+  locale={lang}
+  bare
+>
+  <HomeBody locale={lang} />
+</Doc>
