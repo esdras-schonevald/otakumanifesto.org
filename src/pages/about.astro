@@ -1,0 +1,112 @@
+---
+import Doc from '../layouts/Doc.astro';
+import Note from '../components/Note.astro';
+---
+
+<Doc
+  title="About, license, contributing"
+  kicker="Reference"
+  description="Who maintains the OTAKU Manifesto, why it lives apart from PHPRise, and how the text is licensed."
+  path="/about"
+>
+  <p class="lede">
+    The philosophy outgrew the project that produced it. This site is where it lives
+    now — independent of any language, package manager or vendor.
+  </p>
+
+  <h2>Why a separate home</h2>
+
+  <p>
+    OTAKU was written inside <a href="https://phprise.org">PHPRise</a>, a PHP
+    foundation. That origin was an accident of the first implementation, not a property
+    of the idea: the rules talk about indentation, collections, dependency direction and
+    contracts, and every object-oriented language can express them.
+  </p>
+
+  <p>
+    Keeping the manifesto inside a PHP organization made two mistakes at once. It
+    implied the philosophy required PHP, and it made the PHP repositories carry a copy
+    of a document that was not about them. PHPRise now links here instead of duplicating
+    it.
+  </p>
+
+  <h2>Author</h2>
+
+  <p>
+    Written and maintained by
+    <a href="https://esdras.me">Esdras Schönevald</a>, Lead Software Engineer and
+    maintainer of PHPRise. The philosophy comes from two decades of building payment,
+    identity and healthcare systems — and from the recurring experience that the
+    expensive part of software is never the code you write, but the structure you keep.
+  </p>
+
+  <p>
+    The intellectual debts are listed on the <a href="https://esdras.me/#inspirations">personal
+    site</a>: Object Calisthenics (Jeff Bay), Clean Architecture (Robert C. Martin),
+    DDD (Eric Evans), the Unix philosophy, Conway, Parnas and Dijkstra.
+  </p>
+
+  <h2>License</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Part</th><th>License</th><th>You may</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Text of the manifesto and guide</td>
+          <td><a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></td>
+          <td>Share and adapt, with attribution and the same license</td>
+        </tr>
+        <tr>
+          <td>Code samples</td>
+          <td>MIT</td>
+          <td>Use, modify and sell, with attribution in the source</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    Attribution: link to <code>https://otakumanifesto.org</code> and name the author.
+    That is enough.
+  </p>
+
+  <h2>Contributing</h2>
+
+  <p>
+    The source is public at
+    <a href="https://github.com/esdras-schonevald/otakumanifesto.org">github.com/esdras-schonevald/otakumanifesto.org</a>.
+    The site is a static Astro build — no runtime, no database.
+  </p>
+
+  <ul>
+    <li><strong>Corrections</strong> (typos, broken links, wrong code) — open an issue or a PR directly.</li>
+    <li><strong>New examples</strong> in another language — welcome, provided the rule is unchanged.</li>
+    <li><strong>Changing a rule</strong> — open an issue first. The rules are intentionally hard to change; that is the point.</li>
+  </ul>
+
+  <h2>Versioning</h2>
+
+  <p>
+    The philosophy is versioned by date, not by semantic version. A rule is never
+    silently edited: changes are announced, discussed and reflected in the guide with
+    an example of what changed.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Version</th><th>Change</th></tr></thead>
+      <tbody>
+        <tr><td>2026.10</td><td>First public edition outside PHPRise: five pillars, three shapes, cross-language guide.</td></tr>
+        <tr><td>—</td><td>Earlier internal drafts lived inside PHPRise repositories.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <Note label="A note on zeal">
+    <p>
+      A philosophy that turns into a personality test has failed. The rules are about
+      code, and code can be changed. Argue with the rule, never with the person.
+    </p>
+  </Note>
+</Doc>

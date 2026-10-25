@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://otakumanifesto.org/sitemap-index.xml

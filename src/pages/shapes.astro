@@ -1,0 +1,174 @@
+---
+import Doc from '../layouts/Doc.astro';
+import Note from '../components/Note.astro';
+---
+
+<Doc
+  title="The three shapes"
+  kicker="Chapter 02 — the taxonomy"
+  description="Every repository is an atom, an assembly or an application. The taxonomy is enforced at the source, in every language ecosystem."
+  path="/shapes"
+>
+  <p class="lede">
+    Modularity is not reviewed after the fact — it is enforced by the shape of the
+    repository. Every repository must fit exactly one of three archetypes. There is
+    no fourth option and no hybrid.
+  </p>
+
+  <h2>1 — Atom</h2>
+
+  <p>
+    The smallest possible unit of granularity. If a component can be broken down
+    further, it is not an atom.
+  </p>
+
+  <ul>
+    <li><strong>Structure:</strong> flat. A single level of directory inside the source root.</li>
+    <li><strong>Rule:</strong> no subdivisions. It fulfils one specific contract.</li>
+    <li><strong>Test:</strong> can you describe it with one sentence that has no “and”?</li>
+    <li><strong>Examples:</strong> a value object, a string utility, a single HTTP client, a contract-only package.</li>
+  </ul>
+
+  <h2>2 — Assembly</h2>
+
+  <p>
+    A connection point. Assemblies contain no logic; they orchestrate the union of
+    atoms so that one dependency declaration installs ten packages.
+  </p>
+
+  <ul>
+    <li><strong>Structure:</strong> no source code. Composition is declared in the package manifest.</li>
+    <li><strong>Rule:</strong> if it has behaviour, it is not an assembly.</li>
+    <li><strong>Test:</strong> can you delete its manifest and have nothing left but a README?</li>
+    <li><strong>Examples:</strong> a meta-package that bundles the HTTP atoms, a “commons” bundle.</li>
+  </ul>
+
+  <h2>3 — Application</h2>
+
+  <p>
+    The living system. Not a library, but the implementation of the business heart,
+    following Clean Architecture and DDD.
+  </p>
+
+  <ul>
+    <li><strong>Structure:</strong> domain, application, infrastructure, interface — dependencies pointing inwards.</li>
+    <li><strong>Rule:</strong> stay lean. Anything generic is pushed down into atoms.</li>
+    <li><strong>Test:</strong> does it contain a use case that a business expert would recognize?</li>
+    <li><strong>Examples:</strong> a payment gateway, an identity service, a kanban board.</li>
+  </ul>
+
+  <h2>The same idea in four ecosystems</h2>
+
+  <p>
+    The names of the artifacts change; the shapes do not.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Shape</th>
+          <th>PHP / Composer</th>
+          <th>C# / NuGet</th>
+          <th>Java / Maven</th>
+          <th>C++ / Conan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Atom</strong></td>
+          <td><code>type: library</code>, one namespace</td>
+          <td>class library, one namespace</td>
+          <td>jar, one package</td>
+          <td>header + library, one namespace</td>
+        </tr>
+        <tr>
+          <td><strong>Assembly</strong></td>
+          <td><code>type: metapackage</code>, only <code>require</code></td>
+          <td>package with no compiled code, <code>PackageReference</code> only</td>
+          <td>pom with <code>&lt;dependency&gt;</code> only, no sources</td>
+          <td>conanfile that only <code>requires</code></td>
+        </tr>
+        <tr>
+          <td><strong>Application</strong></td>
+          <td><code>type: project</code>, <code>src/Domain</code>, <code>src/Application</code>…</td>
+          <td>executable / web project with layer folders</td>
+          <td>bootable app with layer modules</td>
+          <td>executable target with layer directories</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>How to classify a repository</h2>
+
+  <p>Ask the three questions in order and stop at the first “yes”.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Question</th><th>If yes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Does it contain use cases and business rules?</td><td>Application</td></tr>
+        <tr><td>Does it contain only dependency declarations?</td><td>Assembly</td></tr>
+        <tr><td>Does it fit in one sentence with one responsibility?</td><td>Atom</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    If none of the answers is “yes”, the repository is not ready to exist. That is
+    not a stylistic judgement; it is the signal that the boundary has not been found
+    yet.
+  </p>
+
+  <h2>Why three, and not more</h2>
+
+  <p>
+    More shapes mean more places to hide. A fourth archetype — “shared utilities”,
+    “common”, “core” — always becomes the place where unrelated things accumulate
+    until nobody can delete anything.
+  </p>
+
+  <p>
+    Three shapes also give a mechanical rule for leaks: code that belongs to an atom
+    but lives in an application will eventually be copied into another application.
+    The taxonomy makes that leak visible at review time, because the reviewer can
+    ask a single question: <em>does this file belong to this shape?</em>
+  </p>
+
+  <Note label="Anti-pattern" variant="warn">
+    <p>
+      A repository called <code>utils</code>, <code>shared</code> or <code>core</code>
+      with more than one responsibility. It is not an assembly (it has logic) and it
+      is not an atom (it does several things). It is the shape that OTAKU removes.
+    </p>
+  </Note>
+
+  <h2>Enforcement</h2>
+
+  <p>
+    A taxonomy that lives in a document is a suggestion. To enforce it, put the shape
+    in machine-readable metadata and check it in CI:
+  </p>
+
+  <ul>
+    <li><strong>PHP:</strong> <code>composer.json</code> → <code>type</code> must be <code>library</code>, <code>metapackage</code> or <code>project</code>.</li>
+    <li><strong>C#:</strong> an assembly must have no <code>.cs</code> files; the <code>.csproj</code> should be <code>Microsoft.NET.Sdk</code> with no compile items.</li>
+    <li><strong>Java:</strong> an assembly module must have an empty <code>src/main/java</code>.</li>
+    <li><strong>C++:</strong> an assembly is headers-only or absent; the <code>conanfile</code> must declare <code>requires</code> and no <code>sources()</code>.</li>
+  </ul>
+
+  <p>
+    For the application shape, the check is structural: assert that the domain layer
+    has no import of infrastructure, framework or database packages. Every ecosystem
+    has a tool for that — <code>deptrac</code> (PHP), <code>NetArchTest</code> (C#),
+    <code>ArchUnit</code> (Java), <code>include-what-you-use</code> plus build-graph
+    rules (C++).
+  </p>
+
+  <p>
+    <a href="/guide">Continue to the guide →</a>
+  </p>
+</Doc>

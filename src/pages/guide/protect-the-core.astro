@@ -1,0 +1,250 @@
+---
+import Doc from '../../layouts/Doc.astro';
+import CodeTabs from '../../components/CodeTabs.astro';
+import Note from '../../components/Note.astro';
+
+const phpEntity = String.raw`namespace App\Domain\Account;
+
+final class Account
+{
+    private function __construct(
+        private AccountId $id,
+        private Money $balance,
+    ) {}
+
+    public function withdraw(Money $amount): self
+    {
+        if ($this->balance->isLessThan($amount)) {
+            throw new InsufficientFunds($this->id);
+        }
+
+        return new self($this->id, $this->balance->subtract($amount));
+    }
+}`;
+
+const phpPort = String.raw`namespace App\Domain\Account;
+
+interface Accounts
+{
+    public function get(AccountId $id): Account;
+
+    public function save(Account ...$accounts): void;
+}`;
+
+const phpPorts = String.raw`namespace App\Domain\Account;
+
+interface Accounts
+{
+    public function get(AccountId $id): Account;
+    public function save(Account ...$accounts): void;
+}
+
+interface Ledger
+{
+    public function record(Transfer $transfer): Receipt;
+}`;
+
+const csPorts = String.raw`namespace App.Domain.Account;
+
+public interface IAccounts
+{
+    Account Get(AccountId id);
+    void Save(params Account[] accounts);
+}
+
+public interface ILedger
+{
+    Receipt Record(Transfer transfer);
+}`;
+
+const javaPorts = String.raw`package app.domain.account;
+
+public interface Accounts {
+    Account get(AccountId id);
+    void save(Account... accounts);
+}
+
+public interface Ledger {
+    Receipt record(Transfer transfer);
+}`;
+
+const cppPorts = String.raw`namespace app::domain::account {
+
+class Accounts {
+public:
+    virtual ~Accounts() = default;
+    virtual Account get(const AccountId& id) = 0;
+    virtual void save(const Account& account) = 0;
+};
+
+class Ledger {
+public:
+    virtual ~Ledger() = default;
+    virtual Receipt record(const Transfer& transfer) = 0;
+};
+
+}`;
+
+const deptrac = String.raw`# deptrac.yaml
+parameters:
+  paths:
+    - ./src
+  layers:
+    - name: Domain
+      collectors:
+        - type: directory
+          value: src/Domain/.*
+    - name: Application
+      collectors:
+        - type: directory
+          value: src/Application/.*
+    - name: Infrastructure
+      collectors:
+        - type: directory
+          value: src/Infrastructure/.*
+  ruleset:
+    Domain: ~
+    Application:
+      - Domain
+    Infrastructure:
+      - Domain
+      - Application`;
+---
+
+<Doc
+  title="Armor: protect the core"
+  kicker="Track A — Armor the Core"
+  description="Dependency direction, ports and adapters, and how to keep frameworks out of the domain in PHP, C#, Java and C++."
+  path="/guide/protect-the-core"
+>
+  <p class="lede">
+    The domain is the only part of the system that cannot be replaced. Armor is not
+    about hiding it — it is about making sure nothing else can dictate its shape.
+  </p>
+
+  <h2>The dependency rule</h2>
+
+  <p>
+    Source dependencies point inwards. Nothing in an inner circle may know the name of
+    anything in an outer circle: not a class, not an annotation, not a framework
+    interface, not a database type.
+  </p>
+
+<pre><code>Interface  ──▶  Application  ──▶  Domain
+Infrastructure ──────────────────▶  Domain</code></pre>
+
+  <p>
+    Arrows are compile-time imports. If <code>Domain/Account.php</code> imports
+    <code>Doctrine\ORM\Mapping\Entity</code>, the arrow points the wrong way and the
+    framework now owns your business rules.
+  </p>
+
+  <h2>Ports and adapters</h2>
+
+  <p>
+    The domain declares what it needs as a port. Infrastructure implements it as an
+    adapter. The domain keeps the vocabulary; the adapter keeps the vendor.
+  </p>
+
+  <CodeTabs
+    title="The same port, four languages"
+    tabs={[
+      { id: 'php', label: 'PHP', code: phpPorts },
+      { id: 'cs', label: 'C#', code: csPorts },
+      { id: 'java', label: 'Java', code: javaPorts },
+      { id: 'cpp', label: 'C++', code: cppPorts },
+    ]}
+  />
+
+  <p>
+    The C++ version uses an abstract class with a virtual destructor because the
+    language has no interfaces — the shape is identical: a named contract owned by the
+    domain, with no implementation detail in sight.
+  </p>
+
+  <h2>A domain entity that knows nothing</h2>
+
+  <CodeTabs
+    title="Entity and its port"
+    tabs={[
+      { id: 'php', label: 'Entity', code: phpEntity },
+      { id: 'cs', label: 'Port', code: phpPort },
+    ]}
+  />
+
+  <p>
+    No annotations, no base class, no active record. The entity can be constructed in
+    a unit test with no database, no container and no framework boot.
+  </p>
+
+  <h2>The anti-patterns</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Symptom</th><th>What it means</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Entity extends a framework base class</td>
+          <td>The framework owns lifecycle and state</td>
+          <td>Plain object + adapter mapping</td>
+        </tr>
+        <tr>
+          <td>Domain imports <code>EntityManager</code>, <code>DbContext</code>, <code>Session</code></td>
+          <td>Persistence is in the core</td>
+          <td>Repository port in the domain</td>
+        </tr>
+        <tr>
+          <td>Validation annotations on domain fields</td>
+          <td>Transport rules became business rules</td>
+          <td>Validate in the use case or in the value object</td>
+        </tr>
+        <tr>
+          <td>Domain throws HTTP exceptions</td>
+          <td>The adapter leaked inwards</td>
+          <td>Domain exceptions + mapping at the edge</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Make the arrow a build failure</h2>
+
+  <p>
+    A dependency rule enforced by review decays. Enforce it with a tool that fails the
+    pipeline:
+  </p>
+
+  <CodeTabs
+    title="PHP — deptrac"
+    tabs={[{ id: 'php', label: 'deptrac.yaml', code: deptrac }]}
+  />
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Language</th><th>Architecture test</th></tr></thead>
+      <tbody>
+        <tr><td>PHP</td><td><code>deptrac</code>, PHPStan custom rules</td></tr>
+        <tr><td>C#</td><td><code>NetArchTest</code>, NDepend</td></tr>
+        <tr><td>Java</td><td><code>ArchUnit</code></td></tr>
+        <tr><td>C++</td><td>target-level dependency rules in CMake, <code>include-what-you-use</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <Note label="Migration" variant="warn">
+    <p>
+      You do not need to stop the world. Extract the use case first, give it ports,
+      then move the ORM calls into adapters one at a time. The compiler and the
+      architecture test tell you when the arrow finally points inwards.
+    </p>
+  </Note>
+
+  <h2>What “armor” is not</h2>
+
+  <p>
+    It is not a four-layer folder structure with the same model copied four times. If
+    the domain entity and the database entity are identical, the boundary is
+    ceremonial — you moved code, not dependencies. The test is the import graph, not
+    the directory tree.
+  </p>
+</Doc>

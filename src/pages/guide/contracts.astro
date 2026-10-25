@@ -1,0 +1,196 @@
+---
+import Doc from '../../layouts/Doc.astro';
+import CodeTabs from '../../components/CodeTabs.astro';
+import Note from '../../components/Note.astro';
+
+const openapi = String.raw`openapi: 3.1.0
+info:
+  title: Accounts
+  version: 1.4.0
+paths:
+  /accounts/{id}/withdrawals:
+    post:
+      operationId: withdraw
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, currency]
+              properties:
+                amount: { type: integer, minimum: 1 }
+                currency: { type: string, enum: [BRL, USD] }
+      responses:
+        "201":
+          description: Withdrawal accepted
+        "409":
+          description: Insufficient funds
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Problem" }`;
+
+const phpContract = String.raw`namespace App\Domain\Account;
+
+final class Withdrawal
+{
+    private function __construct(
+        private AccountId $account,
+        private Money $amount,
+    ) {}
+
+    public static function fromRequest(AccountId $account, Money $amount): self
+    {
+        if ($amount->isNegative()) {
+            throw new InvalidWithdrawalAmount($amount);
+        }
+
+        return new self($account, $amount);
+    }
+
+    public function account(): AccountId { return $this->account; }
+    public function amount(): Money { return $this->amount; }
+}`;
+
+const csContract = String.raw`namespace App.Domain.Account;
+
+public sealed record Withdrawal(AccountId Account, Money Amount)
+{
+    public static Withdrawal FromRequest(AccountId account, Money amount)
+    {
+        if (amount.IsNegative)
+            throw new InvalidWithdrawalAmount(amount);
+
+        return new Withdrawal(account, amount);
+    }
+}`;
+---
+
+<Doc
+  title="Contracts and language"
+  kicker="Track U — Universal Language & Contracts"
+  description="Ubiquitous language, design-first contracts and compatibility rules that make a promise testable."
+  path="/guide/contracts"
+>
+  <p class="lede">
+    Two systems integrate at a contract, not at a class. The contract is the part you
+    cannot change casually, and the language inside it is the part your business
+    expert must recognize.
+  </p>
+
+  <h2>Ubiquitous language</h2>
+
+  <p>
+    If the expert says “settlement”, the code does not say
+    <code>PaymentResult</code>. Names are not cosmetic: a wrong name forces a
+    translation layer in someone’s head, and that layer is where requirements get
+    lost.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Business says</th><th>Code says</th><th>Why it hurts</th></tr></thead>
+      <tbody>
+        <tr><td>settlement</td><td><code>PaymentResult</code></td><td>Two names for one concept; reports and code disagree</td></tr>
+        <tr><td>chargeback</td><td><code>refund</code></td><td>Different lifecycles collapsed into one type</td></tr>
+        <tr><td>holder</td><td><code>user</code></td><td>“User” leaks a technical actor into a financial rule</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    The test is mechanical: read a use case aloud to the expert. When they interrupt to
+    correct a word, the code is wrong.
+  </p>
+
+  <h2>Design first</h2>
+
+  <p>
+    The contract is written before the implementation. It is the artifact two teams
+    can disagree about cheaply, and the one that survives a rewrite.
+  </p>
+
+  <CodeTabs
+    title="OpenAPI 3.1 — the promise"
+    tabs={[{ id: 'php', label: 'openapi.yaml', code: openapi }]}
+  />
+
+  <p>
+    Note what the contract does <strong>not</strong> contain: class names, database
+    columns, framework annotations. It describes resources, verbs and failure modes —
+    the same vocabulary the business uses.
+  </p>
+
+  <h2>The contract inside the code</h2>
+
+  <CodeTabs
+    title="Validation belongs to the concept"
+    tabs={[
+      { id: 'php', label: 'PHP', code: phpContract },
+      { id: 'cs', label: 'C#', code: csContract },
+    ]}
+  />
+
+  <p>
+    The request object is not a DTO bag. It is the smallest type that can represent a
+    valid withdrawal — and the only place where “amount must be positive” is allowed to
+    live.
+  </p>
+
+  <h2>Compatibility rules</h2>
+
+  <ul>
+    <li><strong>Additive only.</strong> New optional fields and new endpoints are safe; renaming and removal are breaking.</li>
+    <li><strong>Never reuse a field name</strong> with a different meaning. That is a silent breaking change.</li>
+    <li><strong>Version the contract, not the class.</strong> A semantic version on the API, not on an internal namespace.</li>
+    <li><strong>Deprecate before deleting.</strong> Announce, warn in responses, then remove — in that order.</li>
+    <li><strong>Error shape is part of the contract.</strong> A <code>409</code> with an undocumented body is a broken promise.</li>
+  </ul>
+
+  <h2>Test the promise, not the implementation</h2>
+
+  <p>
+    Contract tests validate that the implementation still honours the document:
+    schema validation of responses, consumer-driven tests (Pact), and a CI step that
+    diffs the published spec against the previous version and fails on breaking
+    changes.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Language</th><th>Contract tooling</th></tr></thead>
+      <tbody>
+        <tr><td>PHP</td><td>OpenAPI validators, <code>league/openapi-psr7-validator</code>, Pact PHP</td></tr>
+        <tr><td>C#</td><td>NSwag, Microsoft.OpenApi, Pact .NET</td></tr>
+        <tr><td>Java</td><td>springdoc-openapi, Pact JVM</td></tr>
+        <tr><td>C++</td><td>spec validation in integration tests, Pact via a binding</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <Note label="The rule" variant="rule">
+    <p>
+      If the code does not read like the business expert speaks, or if the contract is
+      bypassed, the system is broken.
+    </p>
+  </Note>
+
+  <h2>Bypassing is the default failure</h2>
+
+  <p>
+    Contracts are usually not broken by bad design — they are bypassed by convenience:
+    a service calling another’s database, a client reading an internal endpoint, a
+    “temporary” field added straight in production. Each bypass is a second source of
+    truth, and two sources of truth never stay equal for long.
+  </p>
+
+  <p>
+    The countermeasure is social before technical: the contract must be the only door,
+    and the door must be cheaper to use than the wall.
+  </p>
+</Doc>

@@ -1,0 +1,24 @@
+---
+import { nav } from '../data/nav';
+
+interface Props {
+  path: string;
+}
+
+const { path } = Astro.props;
+---
+
+{nav.map((group) => (
+  <div class="nav-group">
+    <p class="nav-group__label">{group.label}</p>
+    <ul>
+      {group.items.map((item) => (
+        <li>
+          <a href={item.href} aria-current={item.href === path ? 'page' : undefined}>
+            {item.short}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+))}

@@ -1,0 +1,105 @@
+---
+import Doc from '../../layouts/Doc.astro';
+import Note from '../../components/Note.astro';
+---
+
+<Doc
+  title="How to apply it"
+  kicker="Chapter 03 — the guide"
+  description="A practical guide to applying OTAKU in object-oriented code: discipline, composition, a protected core, silent infrastructure and contracts."
+  path="/guide"
+>
+  <p class="lede">
+    The manifesto says what is mandatory. This guide says what it looks like in code
+    — one rule at a time, with the violation first, because most people recognize
+    their own code faster in the wrong example.
+  </p>
+
+  <h2>The method</h2>
+
+  <ol>
+    <li><strong>Read the rule.</strong> It is one sentence and it is not negotiable.</li>
+    <li><strong>Find the violation.</strong> Look at the smallest example that breaks it.</li>
+    <li><strong>Apply the smallest fix.</strong> Not a redesign — the smallest change that satisfies the rule.</li>
+    <li><strong>Make it impossible to regress.</strong> A linter, an architecture test, a review checklist.</li>
+  </ol>
+
+  <p>
+    Every lesson ends with an enforcement step. A rule that only lives in a document
+    is a preference; a rule that fails the build is a constraint.
+  </p>
+
+  <h2>Tracks</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Track</th><th>Pillar</th><th>What you learn</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="/guide/object-calisthenics">Discipline</a></td>
+          <td>O</td>
+          <td>The nine mechanical rules, and how to survive them without rewriting everything.</td>
+        </tr>
+        <tr>
+          <td><a href="/guide/composition">Composition</a></td>
+          <td>T</td>
+          <td>Small parts, explicit inputs and outputs, the application as a data pipe.</td>
+        </tr>
+        <tr>
+          <td><a href="/guide/protect-the-core">Armor</a></td>
+          <td>A</td>
+          <td>Dependency direction, ports and adapters, architecture tests.</td>
+        </tr>
+        <tr>
+          <td><a href="/guide/silent-infrastructure">Silence</a></td>
+          <td>K</td>
+          <td>Repositories, plain objects, and keeping the database a detail.</td>
+        </tr>
+        <tr>
+          <td><a href="/guide/contracts">Contracts</a></td>
+          <td>U</td>
+          <td>Ubiquitous language, design-first, and what a contract really promises.</td>
+        </tr>
+        <tr>
+          <td><a href="/guide/checklist">Audit</a></td>
+          <td>—</td>
+          <td>A review checklist you can run against a real repository in an hour.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>About the code examples</h2>
+
+  <p>
+    Examples are annotated as <strong>PHP</strong>, <strong>C#</strong>,
+    <strong>Java</strong> or <strong>C++</strong>. Where the rule is syntactic and the
+    four languages disagree only in punctuation, one example is shown with a note.
+    Where the rule is structural, all four are shown — because that is exactly where
+    people assume their language is an exception.
+  </p>
+
+  <p>
+    The language tabs are rendered by CSS, not JavaScript. The site ships no client
+    runtime at all, which is the same constraint the philosophy asks of your domain.
+  </p>
+
+  <h2>Languages covered</h2>
+
+  <p>
+    PHP, C#, Java and C++ share the object-oriented vocabulary this philosophy needs:
+    classes, interfaces, exceptions, generics (or their approximation) and a package
+    manager. Tooling differs, and <a href="/languages">the reference chapter</a> lists
+    the exact tool per language for each enforcement step.
+  </p>
+
+  <Note label="Before you start" variant="warn">
+    <p>
+      Do not apply all nine rules to an existing codebase in one week. Pick one
+      module, apply them there, and let the diff be the argument. OTAKU spreads by
+      example, not by decree.
+    </p>
+  </Note>
+</Doc>

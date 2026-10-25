@@ -1,0 +1,108 @@
+---
+import '../styles/main.css';
+import { neighbour, flat } from '../data/nav';
+import SideNav from '../components/SideNav.astro';
+
+interface Props {
+  title: string;
+  kicker: string;
+  description: string;
+  path: string;
+  bare?: boolean;
+}
+
+const { title, kicker, description, path, bare = false } = Astro.props;
+
+const rawPath = path;
+const normalizedPath = rawPath === '/' ? '/' : rawPath.replace(/\/?$/, '/');
+const canonical = new URL(normalizedPath, Astro.site);
+const current = flat.find((item) => item.href === path);
+const { previous, next } = neighbour(path);
+const pageTitle = path === '/' ? title : `${title} — OTAKU Manifesto`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0e11" media="(prefers-color-scheme: dark)" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="OTAKU Manifesto" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    <link rel="sitemap" href="/sitemap-index.xml" />
+  </head>
+
+  <body>
+    <div class="shell">
+      <aside class="side">
+        <a class="brand" href="/">
+          <span class="brand__mark" aria-hidden="true">OTK</span>
+          <span>otakumanifesto.org</span>
+        </a>
+
+        <div class="side__desktop">
+          <SideNav path={path} />
+        </div>
+
+        <details class="side__mobile">
+          <summary>Contents</summary>
+          <SideNav path={path} />
+        </details>
+      </aside>
+
+      <main class="main">
+        <p class="crumb">
+          <a href="/">OTAKU</a> / {current?.short ?? title}
+        </p>
+
+        {!bare && (
+          <>
+            <div class="kicker">{kicker}</div>
+            <h1>{title}</h1>
+          </>
+        )}
+
+        <article class="prose">
+          <slot />
+        </article>
+
+        <nav class="pager" aria-label="Chapter navigation">
+          {previous ? (
+            <a href={previous.href}>
+              <span>Previous</span>
+              {previous.short}
+            </a>
+          ) : <span />}
+          {next ? (
+            <a class="next" href={next.href}>
+              <span>Next</span>
+              {next.short}
+            </a>
+          ) : null}
+        </nav>
+
+        <footer class="foot">
+          <span>OTAKU Manifesto · <a href="/about">CC BY-SA 4.0</a></span>
+          <span>
+            <a href="https://phprise.org">PHPRise</a> ·
+            <a href="https://github.com/esdras-schonevald/otakumanifesto.org">Source</a> ·
+            <a href="https://github.com/esdras-schonevald">esdras-schonevald</a>
+          </span>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

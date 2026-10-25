@@ -1,0 +1,227 @@
+---
+import Doc from '../../layouts/Doc.astro';
+import CodeTabs from '../../components/CodeTabs.astro';
+import Note from '../../components/Note.astro';
+
+const phpPipe = String.raw`final class TransferMoney
+{
+    public function __construct(
+        private Accounts $accounts,
+        private Ledger $ledger,
+    ) {}
+
+    public function __invoke(Transfer $transfer): Receipt
+    {
+        $source = $this->accounts->get($transfer->source());
+        $target = $this->accounts->get($transfer->target());
+
+        $debited = $source->debit($transfer->amount());
+        $credited = $target->credit($transfer->amount());
+
+        $this->accounts->save($debited, $credited);
+
+        return $this->ledger->record($transfer);
+    }
+}`;
+
+const csPipe = String.raw`public sealed class TransferMoney
+{
+    private readonly IAccounts accounts;
+    private readonly ILedger ledger;
+
+    public TransferMoney(IAccounts accounts, ILedger ledger)
+    {
+        this.accounts = accounts;
+        this.ledger = ledger;
+    }
+
+    public Receipt Execute(Transfer transfer)
+    {
+        var source = accounts.Get(transfer.Source);
+        var target = accounts.Get(transfer.Target);
+
+        var debited = source.Debit(transfer.Amount);
+        var credited = target.Credit(transfer.Amount);
+
+        accounts.Save(debited, credited);
+
+        return ledger.Record(transfer);
+    }
+}`;
+
+const phpRoot = String.raw`// Composition root — infrastructure decides, once.
+$transferMoney = new TransferMoney(
+    new DoctrineAccounts($entityManager),
+    new DoctrineLedger($entityManager),
+);
+
+$receipt = $transferMoney(new Transfer($source, $target, $amount));`;
+
+const phpPort = String.raw`namespace App\Domain\Account;
+
+interface Accounts
+{
+    public function get(AccountId $id): Account;
+
+    public function save(Account ...$accounts): void;
+}`;
+
+const phpAdapter = String.raw`namespace App\Infrastructure\Persistence;
+
+final class DoctrineAccounts implements Accounts
+{
+    public function __construct(private EntityManagerInterface $entityManager) {}
+
+    public function get(AccountId $id): Account
+    {
+        return $this->entityManager->find(Account::class, $id) ?? throw new AccountNotFound($id);
+    }
+
+    public function save(Account ...$accounts): void
+    {
+        foreach ($accounts as $account) {
+            $this->entityManager->persist($account);
+        }
+        $this->entityManager->flush();
+    }
+}`;
+
+const phpRepoTest = String.raw`final class InMemoryAccounts implements Accounts
+{
+    /** @var array<string, Account> */
+    private array $accounts = [];
+
+    public function get(AccountId $id): Account
+    {
+        return $this->accounts[$id->value()] ?? throw new AccountNotFound($id);
+    }
+
+    public function save(Account ...$accounts): void
+    {
+        foreach ($accounts as $account) {
+            $this->accounts[$account->id()->value()] = $account;
+        }
+    }
+}`;
+---
+
+<Doc
+  title="Composition: parts and pipes"
+  kicker="Track T — Tools for Composition"
+  description="How to build systems out of small replaceable parts, treat flow as a data pipe, and keep side effects at the edges."
+  path="/guide/composition"
+>
+  <p class="lede">
+    A Unix tool does one thing and speaks through stdin and stdout. A component here
+    does one thing and speaks through a contract. Everything else — how it is
+    invoked, where it runs, who owns it — is configuration.
+  </p>
+
+  <h2>One part, one job</h2>
+
+  <p>
+    The test is not “is it small?” but “can I describe it without <em>and</em>?”.
+    A class that validates a transfer <em>and</em> persists it has two reasons to
+    change and two failure modes to test. Split it at the <code>and</code>.
+  </p>
+
+  <p>
+    Replaceability follows automatically. A part with one job has a narrow interface,
+    and a narrow interface has few callers to update.
+  </p>
+
+  <h2>The data pipe</h2>
+
+  <p>
+    Input arrives through an adapter (HTTP controller, CLI command, queue consumer),
+    traverses the core as plain data, and leaves through another adapter. The core
+    never knows which adapter called it.
+  </p>
+
+  <CodeTabs
+    title="A use case receives ports, not frameworks"
+    tabs={[
+      { id: 'php', label: 'PHP', code: phpPipe },
+      { id: 'cs', label: 'C#', code: csPipe },
+    ]}
+  />
+
+  <p>
+    Notice what this class does not import: no HTTP, no ORM, no container. It knows
+    two ports named after business concepts, and nothing else. That is the pipe.
+  </p>
+
+  <h2>Composition happens at the edge</h2>
+
+  <p>
+    Someone has to decide which implementation is real. That decision belongs to a
+    composition root — one place, usually the entry point, where infrastructure is
+    wired to the core.
+  </p>
+
+  <CodeTabs
+    title="Composition root"
+    tabs={[{ id: 'php', label: 'PHP', code: phpRoot }]}
+  />
+
+  <p>
+    In C# that place is <code>Program.cs</code>; in Java, the module or a framework
+    configuration class; in C++, <code>main</code>. One file, not scattered through
+    the domain.
+  </p>
+
+  <Note label="Smell" variant="warn">
+    <p>
+      If a domain class asks a container for a dependency, composition has leaked
+      inward. <code>$container->get(...)</code> inside a use case is a hidden
+      parameter and an untestable seam.
+    </p>
+  </Note>
+
+  <h2>Parts must be replaceable, not just small</h2>
+
+  <p>
+    Replaceability requires three things:
+  </p>
+
+  <ol>
+    <li><strong>A contract</strong> that describes behaviour in domain terms.</li>
+    <li><strong>No leaked types</strong> from the implementation (no <code>QueryBuilder</code> in a signature).</li>
+    <li><strong>One implementation per role</strong> in production, and an in-memory one in tests.</li>
+  </ol>
+
+  <p>
+    The in-memory implementation is the cheapest architecture test you will ever
+    write: if the use case cannot run against a fake, it is not composed — it is
+    fused to a framework.
+  </p>
+
+  <h2>Cycles are the failure signal</h2>
+
+  <p>
+    Composition makes dependencies visible. When the graph contains a cycle, two parts
+    are actually one, or a responsibility is in the wrong place. Tools that render the
+    graph — <code>deptrac</code>, <code>ArchUnit</code>, <code>jdeps</code>,
+    <code>include-what-you-use</code> — turn that signal into a build failure.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Language</th><th>Composition mechanism</th><th>Dependency graph check</th></tr></thead>
+      <tbody>
+        <tr><td>PHP</td><td>constructor injection, PSR-11 container at the edge</td><td>deptrac</td></tr>
+        <tr><td>C#</td><td>constructor injection, <code>IServiceCollection</code></td><td>NetArchTest</td></tr>
+        <tr><td>Java</td><td>constructor injection, manual wiring or CDI</td><td>ArchUnit, <code>jdeps</code></td></tr>
+        <tr><td>C++</td><td>references/pointers in constructors, manual wiring in <code>main</code></td><td>build graph, IWYU</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What composition is not</h2>
+
+  <p>
+    It is not “extract an interface for everything”. An interface with one
+    implementation and no test fake is ceremony. Composition is justified by a second
+    implementation — real or in-memory.
+  </p>
+</Doc>

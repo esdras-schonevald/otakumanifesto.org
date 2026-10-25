@@ -1,0 +1,201 @@
+---
+import Doc from '../../layouts/Doc.astro';
+import CodeTabs from '../../components/CodeTabs.astro';
+import Note from '../../components/Note.astro';
+
+const phpPort = String.raw`namespace App\Domain\Account;
+
+interface Accounts
+{
+    public function get(AccountId $id): Account;
+
+    public function save(Account ...$accounts): void;
+}`;
+
+const phpAdapter = String.raw`namespace App\Infrastructure\Persistence;
+
+final class DoctrineAccounts implements Accounts
+{
+    public function __construct(private EntityManagerInterface $entityManager) {}
+
+    public function get(AccountId $id): Account
+    {
+        $record = $this->entityManager->find(AccountRecord::class, $id->value());
+
+        return $record === null
+            ? throw new AccountNotFound($id)
+            : $record->toDomain();
+    }
+
+    public function save(Account ...$accounts): void
+    {
+        foreach ($accounts as $account) {
+            $this->entityManager->persist(AccountRecord::fromDomain($account));
+        }
+
+        $this->entityManager->flush();
+    }
+}`;
+
+const cppPort = String.raw`namespace app::domain {
+
+class Accounts {
+public:
+    virtual ~Accounts() = default;
+    virtual Account get(const AccountId& id) const = 0;
+    virtual void save(const Account& account) = 0;
+};
+
+}`;
+
+const javaValue = String.raw`package app.domain.account;
+
+public record Money(long cents, String currency) {
+    public Money {
+        if (cents < 0) throw new IllegalArgumentException("negative");
+        Objects.requireNonNull(currency);
+    }
+}`;
+
+const csPoco = String.raw`namespace App.Domain.Account;
+
+public sealed class Account
+{
+    public AccountId Id { get; }
+    public Money Balance { get; private set; }
+
+    private Account(AccountId id, Money balance)
+    {
+        Id = id;
+        Balance = balance;
+    }
+
+    public static Account Open(AccountId id, Money initial) =>
+        new(id, initial);
+
+    public void Withdraw(Money amount) =>
+        Balance = Balance.Subtract(amount);
+}`;
+---
+
+<Doc
+  title="Infrastructure stays silent"
+  kicker="Track K — Keep Infrastructure Silent"
+  description="Repositories as in-memory collections, plain objects, and mapping at the boundary. The database is a detail."
+  path="/guide/silent-infrastructure"
+>
+  <p class="lede">
+    The database is the most expensive detail in most systems and the least
+    interesting. Silence means the domain can be reasoned about without knowing which
+    engine, which ORM, or whether a transaction is open.
+  </p>
+
+  <h2>A repository is a collection</h2>
+
+  <p>
+    The word is literal. A repository behaves like an in-memory collection of
+    aggregates: you get one, you add one, you save what you have. No query builders, no
+    SQL fragments, no lazy-loading proxies crossing the boundary.
+  </p>
+
+  <CodeTabs
+    title="Port and adapter"
+    tabs={[
+      { id: 'php', label: 'Port', code: phpPort },
+      { id: 'cs', label: 'Adapter', code: phpAdapter },
+    ]}
+  />
+
+  <p>
+    The port has no <code>findByEmailLikedSince</code>. Query objects exist for
+    reports; the repository serves the use cases’ need for aggregates.
+  </p>
+
+  <h2>Plain objects</h2>
+
+  <p>
+    Entities are POPO, POCO, POJO — the acronym is the only thing that changes.
+    Equality is by identity, state is private, behaviour is public, and the object does
+    not know it is persisted.
+  </p>
+
+  <CodeTabs
+    title="The same object, two ecosystems"
+    tabs={[
+      { id: 'cs', label: 'C# — POCO', code: csPoco },
+      { id: 'java', label: 'Java — record', code: javaValue },
+    ]}
+  />
+
+  <Note label="Rule of thumb" variant="rule">
+    <p>
+      If a domain file contains an annotation, an attribute, a base class or a
+      serialization hint, infrastructure is talking. Move it to a mapping class.
+    </p>
+  </Note>
+
+  <h2>Mapping belongs to the boundary</h2>
+
+  <p>
+    Two models, two jobs. The domain model protects invariants; the persistence model
+    protects a schema. They usually start identical and must be allowed to diverge —
+    the mapping class is where that divergence is allowed to exist.
+  </p>
+
+  <p>
+    In C# with EF Core that is a <code>DbContext</code> configuration class. In Java
+    with JPA, a mapper or a separate entity. In C++ with a handwritten store, a mapper
+    function. In PHP with Doctrine, an XML/YAML mapping or attributes kept outside the
+    domain namespace.
+  </p>
+
+  <h2>Transactions are infrastructure</h2>
+
+  <p>
+    A use case says “save these two accounts together”; whether that becomes
+    <code>BEGIN/COMMIT</code>, a unit of work, or a saga is the adapter’s decision. If
+    the domain calls <code>beginTransaction()</code>, the database has become part of
+    the business rules.
+  </p>
+
+  <h2>The in-memory implementation</h2>
+
+  <p>
+    Write it on day one. It is the cheapest proof that the port is honest and the use
+    case is free of infrastructure:
+  </p>
+
+  <CodeTabs
+    title="A fake repository is a test fixture and an architecture test"
+    tabs={[{ id: 'cpp', label: 'C++ port', code: cppPort }]}
+  />
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Language</th><th>Typical persistence detail</th><th>Where it belongs</th></tr></thead>
+      <tbody>
+        <tr><td>PHP</td><td>Doctrine EntityManager, PDO</td><td><code>Infrastructure/</code></td></tr>
+        <tr><td>C#</td><td>DbContext, Dapper, EF migrations</td><td>adapter project</td></tr>
+        <tr><td>Java</td><td>JPA EntityManager, JDBC</td><td><code>infrastructure</code> module</td></tr>
+        <tr><td>C++</td><td>SQL client, connection pool</td><td>adapter translation unit</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What silence buys you</h2>
+
+  <ul>
+    <li>Unit tests that run in milliseconds, with no database container.</li>
+    <li>The ability to change the engine without touching the domain.</li>
+    <li>Errors that mean something: <code>InsufficientFunds</code>, not <code>SQLSTATE[23000]</code>.</li>
+    <li>A domain that can be read by someone who has never seen the schema.</li>
+  </ul>
+
+  <Note label="Common objection" variant="warn">
+    <p>
+      “Two models is duplication.” It is duplication the same way a seatbelt is
+      friction. The moment the schema needs a column the domain should not know about,
+      the duplication pays for itself.
+    </p>
+  </Note>
+</Doc>

@@ -1,0 +1,142 @@
+---
+import Doc from '../../layouts/Doc.astro';
+import Note from '../../components/Note.astro';
+---
+
+<Doc
+  title="Audit checklist"
+  kicker="Track — verify"
+  description="A one-hour audit to check whether a repository actually follows OTAKU, with a scoring model and CI hooks."
+  path="/guide/checklist"
+>
+  <p class="lede">
+    Philosophy that cannot be verified is decoration. This is the audit I run against
+    a real repository — one hour, no rewriting, only evidence.
+  </p>
+
+  <h2>Before you start</h2>
+
+  <ol>
+    <li>Open the repository at the default branch, with CI green or known-red.</li>
+    <li>Print the dependency graph, or generate it (<code>deptrac</code>, <code>ArchUnit</code>, <code>jdeps</code>, <code>cmake --graphviz</code>).</li>
+    <li>Time-box each section. You are collecting evidence, not fixing anything.</li>
+  </ol>
+
+  <h2>Section O — Discipline</h2>
+
+  <ul class="checklist">
+    <li>No method has two levels of indentation.</li>
+    <li><code>else</code> does not appear in the codebase (search, then justify each hit).</li>
+    <li>Primitives that are validated, compared or persisted are wrapped in value objects.</li>
+    <li>Every collection field is its own class.</li>
+    <li>No call chain longer than one dot, except builders and fluent APIs.</li>
+    <li>No abbreviations in public names (<code>req</code>, <code>svc</code>, <code>cfg</code>, <code>mgr</code>).</li>
+    <li>No class over 50 lines; no package over 10 files.</li>
+    <li>No class with more than two instance variables.</li>
+    <li>No getters, setters or public mutable properties.</li>
+  </ul>
+
+  <h2>Section T — Composition</h2>
+
+  <ul class="checklist">
+    <li>Every use case is a class with one public method.</li>
+    <li>Dependencies arrive through the constructor, never from a container lookup.</li>
+    <li>Wiring happens in a single composition root.</li>
+    <li>Each part can be described without the word “and”.</li>
+    <li>The dependency graph has no cycles.</li>
+  </ul>
+
+  <h2>Section A — Armor</h2>
+
+  <ul class="checklist">
+    <li>No domain file imports a framework, ORM, HTTP or database package.</li>
+    <li>Domain exceptions are domain-named (<code>InsufficientFunds</code>), not technical.</li>
+    <li>Entities do not extend framework base classes.</li>
+    <li>Validation of business rules lives in the domain or value objects.</li>
+    <li>An architecture test enforces the layer rule in CI.</li>
+  </ul>
+
+  <h2>Section K — Silence</h2>
+
+  <ul class="checklist">
+    <li>Repositories behave like collections; no query builder leaks through the port.</li>
+    <li>There is an in-memory implementation of every repository port.</li>
+    <li>Domain objects are constructible without a database or container.</li>
+    <li>Transactions are opened by infrastructure, not by the domain.</li>
+    <li>The domain can be tested with no I/O at all.</li>
+  </ul>
+
+  <h2>Section U — Contracts</h2>
+
+  <ul class="checklist">
+    <li>A published contract exists (OpenAPI/IDL) and is versioned.</li>
+    <li>Endpoint and field names match the business vocabulary.</li>
+    <li>Error responses are documented in the contract.</li>
+    <li>Breaking changes are detected in CI (spec diff).</li>
+    <li>No client reaches the database or an internal endpoint directly.</li>
+  </ul>
+
+  <h2>Scoring</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Score</th><th>Verdict</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>40–44</td><td>Compliant</td><td>Keep the CI checks; re-audit quarterly.</td></tr>
+        <tr><td>30–39</td><td>Mostly compliant</td><td>Fix the failing sections in the next sprint; each failure must have an owner.</td></tr>
+        <tr><td>20–29</td><td>Partial</td><td>Pick one section per sprint. Do not start a rewrite.</td></tr>
+        <tr><td>&lt; 20</td><td>Not applied</td><td>The codebase is not OTAKU. Say so, then decide whether to migrate or not — honesty is cheaper than ceremony.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>CI hooks</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Check</th><th>PHP</th><th>C#</th><th>Java</th><th>C++</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Style and size</td>
+          <td>PHP_CodeSniffer</td>
+          <td>StyleCop / Roslyn</td>
+          <td>Checkstyle</td>
+          <td>clang-tidy</td>
+        </tr>
+        <tr>
+          <td>Complexity</td>
+          <td>PHPStan, PhpMetrics</td>
+          <td>Cognitive complexity analyzers</td>
+          <td>PMD</td>
+          <td>clang-tidy <code>readability-function-size</code></td>
+        </tr>
+        <tr>
+          <td>Dependencies</td>
+          <td>deptrac</td>
+          <td>NetArchTest</td>
+          <td>ArchUnit</td>
+          <td>CMake target rules</td>
+        </tr>
+        <tr>
+          <td>Contract</td>
+          <td colspan="4">spec diff + schema validation in integration tests</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What to do with the result</h2>
+
+  <p>
+    Publish the score in the README, with the date and the audited commit. Not to
+    shame anyone — to make progress visible. A repository that goes from 22 to 33 in
+    one quarter is a success story, not a failure.
+  </p>
+
+  <Note label="Rule" variant="rule">
+    <p>
+      Every failing item must name one owner and one date, or it is not a finding — it
+      is an opinion.
+    </p>
+  </Note>
+</Doc>

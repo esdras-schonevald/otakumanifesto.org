@@ -1,0 +1,148 @@
+---
+import Doc from '../layouts/Doc.astro';
+import Note from '../components/Note.astro';
+---
+
+<Doc
+  title="Languages and tooling"
+  kicker="Reference"
+  description="How the OTAKU shapes translate to PHP, C#, Java and C++, plus the tooling for each enforcement step."
+  path="/languages"
+>
+  <p class="lede">
+    The philosophy is language-neutral; the vocabulary is not. Each ecosystem has its
+    own name for a value object, its own way to express a collection, and its own tool
+    to prove that dependencies point inwards.
+  </p>
+
+  <h2>The same concepts, four vocabularies</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Concept</th><th>PHP</th><th>C#</th><th>Java</th><th>C++</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Value object</td>
+          <td><code>final class</code> + private constructor</td>
+          <td><code>record</code> or <code>sealed class</code></td>
+          <td><code>record</code></td>
+          <td><code>class</code> + <code>operator==</code></td>
+        </tr>
+        <tr>
+          <td>First-class collection</td>
+          <td>class wrapping <code>array</code></td>
+          <td>class wrapping <code>IReadOnlyList&lt;T&gt;</code></td>
+          <td>class wrapping <code>List&lt;T&gt;</code></td>
+          <td>class wrapping <code>std::vector&lt;T&gt;</code></td>
+        </tr>
+        <tr>
+          <td>Contract</td>
+          <td><code>interface</code></td>
+          <td><code>interface</code></td>
+          <td><code>interface</code></td>
+          <td>abstract class, pure virtual</td>
+        </tr>
+        <tr>
+          <td>Domain failure</td>
+          <td>exception extending <code>DomainException</code></td>
+          <td>exception, or <code>Result&lt;T&gt;</code></td>
+          <td>unchecked exception</td>
+          <td>exception, or <code>std::expected</code></td>
+        </tr>
+        <tr>
+          <td>Package boundary</td>
+          <td>Composer package</td>
+          <td>NuGet package / project</td>
+          <td>Maven module</td>
+          <td>CMake target / Conan package</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>PHP</h2>
+
+  <p>
+    The reference implementation, and the language where OTAKU was first applied.
+    Attributes replace annotations; <code>declare(strict_types=1)</code> is mandatory;
+    a class never closes the PHP tag.
+  </p>
+
+  <ul>
+    <li><strong>Value objects:</strong> <code>final class</code>, private constructor, named constructors.</li>
+    <li><strong>Collections:</strong> a class with an array field and behaviour — never a bare <code>array</code> in a signature.</li>
+    <li><strong>Ports:</strong> interfaces in the domain namespace; adapters in <code>Infrastructure</code>.</li>
+    <li><strong>Tooling:</strong> PHP_CodeSniffer, PHPStan/Psalm, deptrac, PHPUnit, Infection.</li>
+  </ul>
+
+  <h2>C#</h2>
+
+  <p>
+    C# gives you <code>record</code>, <code>init</code> and <code>required</code>, which
+    make value objects almost free. The risk is the opposite of PHP: it is easy to make
+    everything a record and lose behaviour.
+  </p>
+
+  <ul>
+    <li><strong>Value objects:</strong> <code>sealed record</code> with a validating constructor, or a <code>sealed class</code> with <code>IEquatable&lt;T&gt;</code>.</li>
+    <li><strong>Collections:</strong> wrap <code>IReadOnlyList&lt;T&gt;</code>; expose behaviour, not <code>IEnumerable</code>.</li>
+    <li><strong>Ports:</strong> interfaces in the domain project; adapters in an infrastructure project with no reference back.</li>
+    <li><strong>Tooling:</strong> Roslyn analyzers, StyleCop, NetArchTest, <code>dotnet test</code>.</li>
+  </ul>
+
+  <h2>Java</h2>
+
+  <p>
+    <code>record</code> covers the value object case; the hard part is module
+    boundaries, because Maven’s default is a single classpath where everything sees
+    everything.
+  </p>
+
+  <ul>
+    <li><strong>Value objects:</strong> <code>record</code> with a compact constructor that validates.</li>
+    <li><strong>Collections:</strong> wrap <code>List&lt;T&gt;</code> and never return the internal list.</li>
+    <li><strong>Ports:</strong> interfaces in the domain package; ArchUnit enforces that the domain package imports nothing from infrastructure.</li>
+    <li><strong>Tooling:</strong> Checkstyle, PMD, ArchUnit, <code>jdeps</code>, JUnit 5.</li>
+  </ul>
+
+  <h2>C++</h2>
+
+  <p>
+    The most honest language about costs, and the strictest about ownership. There is no
+    reflection and no framework to hide behind — which makes OTAKU easier to apply and
+    harder to fake.
+  </p>
+
+  <ul>
+    <li><strong>Value objects:</strong> class with private state and <code>operator==</code> defaulted; pass by value or <code>const&amp;</code>.</li>
+    <li><strong>Collections:</strong> wrap <code>std::vector&lt;T&gt;</code>; expose iterators only if the invariant survives.</li>
+    <li><strong>Ports:</strong> abstract class with pure virtual methods and a virtual destructor; no implementation in the header.</li>
+    <li><strong>Tooling:</strong> clang-tidy, include-what-you-use, CMake target visibility, sanitizers, <code>std::expected</code> for expected failures.</li>
+  </ul>
+
+  <Note label="Recommendation">
+    <p>
+      <strong>TypeScript</strong> deserves the same treatment as the four above for web
+      code: it has classes, interfaces, generics and a package manager, and the same
+      rules apply almost verbatim. <strong>Kotlin</strong> and <strong>Swift</strong>
+      inherit the Java and C++ guidance respectively. None of them needs a separate
+      chapter yet — the rules do not change.
+    </p>
+  </Note>
+
+  <h2>What does not translate</h2>
+
+  <ul>
+    <li><strong>Annotations/attributes</strong> have no equivalent in C++; in the other three they are infrastructure and belong outside the domain.</li>
+    <li><strong>Garbage collection vs ownership</strong> changes how aggregates are copied but not how they are designed.</li>
+    <li><strong>Exceptions vs result types</strong> changes the signature of failure, not the rule that failure must be explicit.</li>
+    <li><strong>Package managers</strong> differ in how an assembly is declared; the concept of “no logic, only dependencies” does not.</li>
+  </ul>
+
+  <p>
+    If your language can express a class, an interface and a package, the philosophy
+    applies. If it cannot, say so — and do not pretend.
+  </p>
+</Doc>

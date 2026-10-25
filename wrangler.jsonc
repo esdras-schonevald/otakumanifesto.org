@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "otaku-manifesto",
+  "compatibility_date": "2026-10-25",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    { "pattern": "otakumanifesto.org", "custom_domain": true },
+    { "pattern": "www.otakumanifesto.org", "custom_domain": true }
+  ]
+}

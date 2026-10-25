@@ -1,0 +1,13 @@
+---
+interface Props {
+  label?: string;
+  variant?: 'rule' | 'warn' | 'note';
+}
+
+const { label, variant = 'note' } = Astro.props;
+---
+
+<aside class:list={['note', variant === 'warn' && 'note--warn', variant === 'rule' && 'note--rule']}>
+  {label && <span class="note__label">{label}</span>}
+  <slot />
+</aside>
