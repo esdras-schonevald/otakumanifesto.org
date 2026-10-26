@@ -1,0 +1,128 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  Una filosofía que no puede verificarse es decoración. Esta es la auditoría que ejecuto
+  contra un repositorio real — una hora, sin reescribir nada, solo evidencia.
+</p>
+
+<h2>Antes de empezar</h2>
+
+<ol>
+  <li>Abre el repositorio en la rama por defecto, con CI verde o rojo conocido.</li>
+  <li>Ejecuta la herramienta de complejidad y exporta la lista de métodos por encima de 5.</li>
+  <li>Genera el grafo de dependencias (<code>deptrac</code>, <code>ArchUnit</code>, <code>jdeps</code>, <code>cmake --graphviz</code>).</li>
+  <li>Limita el tiempo de cada sección. Estás recogiendo evidencia, no corrigiendo.</li>
+</ol>
+
+<h2>O — Disciplina (reglas 1–17)</h2>
+
+<ul class="checklist">
+  <li><strong>Complejidad:</strong> ningún método por encima de 5.</li>
+  <li>Ningún método con dos niveles de indentación.</li>
+  <li><code>else</code> no aparece (busca y justifica cada aparición).</li>
+  <li><code>switch</code>/<code>case</code> no aparece.</li>
+  <li>Sin números ni cadenas mágicas.</li>
+  <li>Ninguna clase por encima de 50 líneas; ningún método por encima de 20; ningún paquete por encima de 10 clases.</li>
+  <li>Ninguna clase con más de dos variables de instancia.</li>
+  <li>Ningún método o constructor con más de dos parámetros.</li>
+  <li>Ninguna interfaz con más de dos métodos.</li>
+  <li>Sin abreviaturas en nombres públicos.</li>
+  <li>Booleanos empiezan con <code>is</code>/<code>has</code>/<code>can</code>/<code>should</code>; métodos empiezan con verbo.</li>
+  <li>Constantes en <code>UPPER_SNAKE_CASE</code>; propiedades y métodos en <code>camelCase</code>.</li>
+</ul>
+
+<h2>T — Composición (reglas 18–24)</h2>
+
+<ul class="checklist">
+  <li>Toda colección es su propia clase.</li>
+  <li>Ninguna cadena de llamadas de más de un punto, salvo builders.</li>
+  <li>Ningún método estático, salvo fábricas y funciones puras.</li>
+  <li>Comandos y consultas separados; los métodos que devuelven valor no tienen efectos.</li>
+  <li>Sin estado global ni singletons; las dependencias llegan por el constructor.</li>
+  <li>Los casos de uso son clases con un método público.</li>
+  <li>El wiring ocurre en una única raíz de composición.</li>
+  <li>El grafo de dependencias no tiene ciclos.</li>
+</ul>
+
+<h2>A — Blindaje (reglas 25–31)</h2>
+
+<ul class="checklist">
+  <li>Sin getters, setters ni propiedades públicas mutables.</li>
+  <li>Propiedades privadas; <code>protected</code> solo para herencia de framework.</li>
+  <li>Clases <code>final</code> o <code>sealed</code> por defecto.</li>
+  <li>Sin herencia, salvo clases base de framework.</li>
+  <li>Entradas validadas en constructores y métodos públicos.</li>
+  <li>Las precondiciones fallan rápido, con excepción de dominio.</li>
+  <li>Los parámetros de entrada nunca se mutan.</li>
+  <li>Ningún archivo de dominio importa framework, ORM, HTTP o base de datos.</li>
+  <li>Una prueba de arquitectura impone la regla de capas en CI.</li>
+</ul>
+
+<h2>K — Silencio (reglas 32–36)</h2>
+
+<ul class="checklist">
+  <li>Propiedades inmutables; los métodos devuelven nuevas instancias.</li>
+  <li>Los métodos que devuelven colecciones devuelven una colección vacía, nunca <code>null</code>.</li>
+  <li>El fallo es explícito — Result/Either o excepción — nunca <code>null</code>.</li>
+  <li>Sin dependencias ocultas, métodos mágicos ni conversiones implícitas.</li>
+  <li>Sin SQL, HTTP ni rutas de archivo en el dominio.</li>
+  <li>Los repositorios se comportan como colecciones; existe implementación en memoria.</li>
+  <li>Las transacciones las abre la infraestructura, no el dominio.</li>
+</ul>
+
+<h2>U — Contratos (reglas 37–40)</h2>
+
+<ul class="checklist">
+  <li>Primitivos y cadenas con significado son objetos de valor.</li>
+  <li>Sin <code>mixed</code>/<code>array</code>/<code>object</code> fuera de serialización explícita.</li>
+  <li>Todo método público está declarado en una interfaz.</li>
+  <li>Los comentarios explican el porqué y viven en los contratos.</li>
+  <li>Existe contrato publicado (OpenAPI/IDL), versionado y alineado al vocabulario.</li>
+  <li>Los cambios que rompen se detectan en CI (diff de spec).</li>
+  <li>Ningún cliente accede a la base de datos ni a un endpoint interno directamente.</li>
+</ul>
+
+<h2>Puntuación</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Nota</th><th>Veredicto</th><th>Acción</th></tr></thead>
+    <tbody>
+      <tr><td>90–100%</td><td>Conforme</td><td>Mantén los checks de CI; reaudita trimestralmente.</td></tr>
+      <tr><td>70–89%</td><td>Casi conforme</td><td>Corrige las secciones que fallan en el próximo sprint; cada fallo necesita dueño.</td></tr>
+      <tr><td>40–69%</td><td>Parcial</td><td>Una sección por sprint. No empieces una reescritura.</td></tr>
+      <tr><td>&lt; 40%</td><td>No aplicado</td><td>La base no es OTAKU. Dilo y decide si migras — la honestidad es más barata que la ceremonia.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Ganchos de CI</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Check</th><th>PHP</th><th>C#</th><th>Java</th><th>C++</th><th>TypeScript</th></tr></thead>
+    <tbody>
+      <tr><td>Complejidad ≤ 5</td><td>PHP_CodeSniffer</td><td>CA1502</td><td>PMD</td><td>clang-tidy</td><td>ESLint <code>complexity</code></td></tr>
+      <tr><td>Tamaño y estilo</td><td>PHP_CodeSniffer</td><td>StyleCop</td><td>Checkstyle</td><td>clang-tidy</td><td>ESLint</td></tr>
+      <tr><td>Dependencias</td><td>deptrac</td><td>NetArchTest</td><td>ArchUnit</td><td>targets CMake</td><td>ts-arch</td></tr>
+      <tr><td>Contrato</td><td colspan="5">diff de spec + validación de esquema en pruebas de integración</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Qué hacer con el resultado</h2>
+
+<p>
+  Publica la nota en el README, con la fecha y el commit auditado. No para exponer a
+  nadie — para hacer visible el progreso. Un repositorio que pasa de 45% a 72% en un
+  trimestre es una historia de éxito, no de fracaso.
+</p>
+
+<Note label="Regla" variant="rule">
+  <p>
+    Todo ítem que falla debe nombrar un dueño y una fecha, o no es un hallazgo — es una
+    opinión.
+  </p>
+</Note>

@@ -1,7 +1,7 @@
 import type { Locale } from './ruleGroups';
 
 export type Lang = 'php' | 'ts' | 'cs' | 'java' | 'cpp' | 'text' | 'yaml' | 'bash';
-export type L10n = Record<'en' | 'pt-br', string>;
+export type L10n = Partial<Record<Locale, string>> & { en: string };
 
 export type ExampleSet = Partial<Record<Lang, string>>;
 

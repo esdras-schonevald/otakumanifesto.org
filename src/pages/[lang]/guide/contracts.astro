@@ -2,10 +2,10 @@
 import Doc from '../../../layouts/Doc.astro';
 import CodeTabs from '../../../components/CodeTabs.astro';
 import Note from '../../../components/Note.astro';
-import { localePaths } from '../../../i18n/routes';
+import { ptPaths } from '../../../i18n/routes';
 
 export function getStaticPaths() {
-  return localePaths();
+  return ptPaths();
 }
 
 const openapi = String.raw`openapi: 3.1.0

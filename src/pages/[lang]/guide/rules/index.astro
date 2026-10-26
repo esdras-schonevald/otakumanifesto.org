@@ -2,44 +2,46 @@
 import Doc from '../../../../layouts/Doc.astro';
 import { groups } from '../../../../data/ruleGroups';
 import { rulesOfGroup } from '../../../../data/rulesIndex';
+import { rulesPageFor } from '../../../../i18n/rulesPage';
+import { rulesEs } from '../../../../i18n/rules.es';
+import { localePaths } from '../../../../i18n/routes';
 import type { Locale } from '../../../../data/ruleGroups';
 
 export function getStaticPaths() {
-  return [{ params: { lang: 'pt-br' }, props: { lang: 'pt-br' as Locale } }];
+  return localePaths();
 }
 
 const { lang } = Astro.props as { lang: Locale };
+const copy = rulesPageFor(lang);
+
+const titleOf = (rule: { id: number; title: Record<string, string> }) =>
+  lang === 'es'
+    ? rulesEs[rule.id]?.title ?? rule.title.en
+    : rule.title['pt-br'] ?? rule.title.en;
+
+const base = `/${lang}`;
 ---
 
 <Doc
-  title="As quarenta regras"
-  kicker="Trilha O — Domine sua Disciplina"
-  description="As 40 regras mensuráveis do OTAKU, agrupadas por pilar, com os limites e a métrica principal."
+  title={copy.title}
+  kicker={copy.kicker}
+  description={copy.lede}
   path="/guide/rules"
   locale={lang}
 >
-  <p class="lede">
-    Quarenta regras, cada uma com um limite. São mecânicas por um motivo: uma regra
-    que depende de gosto não pode ser revisada, automatizada ou discutida.
-  </p>
+  <p class="lede">{copy.lede}</p>
 
-  <p>
-    <strong>Complexidade ciclomática ≤ 5 por método</strong> é a métrica principal. Ela
-    conta os caminhos independentes que o leitor precisa sustentar ao mesmo tempo: cada
-    ramo, laço e operador booleano soma um. O resto da disciplina existe para manter
-    esse número baixo. Cada regra abaixo tem sua própria página com propósito,
-    conceito, problema e solução.
-  </p>
+  <p set:html={copy.intro} />
 
   {groups.map((group) => (
     <section>
-      <h2>{group.pillar} — {group.title['pt-br']}</h2>
+      <h2>{group.pillar} — {group.title[lang]}</h2>
       <ul class="rules-index">
         {rulesOfGroup(group.id).map((rule) => (
           <li>
-            <a href={`/pt-br/guide/rules/${rule.slug}/`}>
+            <a href={`${base}/guide/rules/${rule.slug}/`}>
               <span class="n">{String(rule.id).padStart(2, '0')}</span>
-              <span>{rule.title['pt-br']}</span>
+              <span>{titleOf(rule)}</span>
             </a>
           </li>
         ))}
@@ -47,8 +49,5 @@ const { lang } = Astro.props as { lang: Locale };
     </section>
   ))}
 
-  <p>
-    Em caso de dúvida, escolha a opção mais restritiva. É o critério de desempate que a
-    filosofia prescreve.
-  </p>
+  <p>{copy.outro}</p>
 </Doc>

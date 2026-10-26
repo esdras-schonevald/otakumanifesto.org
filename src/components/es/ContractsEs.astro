@@ -1,0 +1,164 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const openapi = String.raw`openapi: 3.1.0
+info:
+  title: Accounts
+  version: 1.4.0
+paths:
+  /accounts/{id}/withdrawals:
+    post:
+      operationId: withdraw
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, currency]
+              properties:
+                amount: { type: integer, minimum: 1 }
+                currency: { type: string, enum: [BRL, USD] }
+      responses:
+        "201":
+          description: Retiro aceptado
+        "409":
+          description: Saldo insuficiente`;
+
+const phpContract = String.raw`namespace App\Domain\Account;
+
+final class Withdrawal
+{
+    private function __construct(
+        private AccountId $account,
+        private Money $amount,
+    ) {}
+
+    public static function fromRequest(AccountId $account, Money $amount): self
+    {
+        if ($amount->isNegative()) {
+            throw new InvalidWithdrawalAmount($amount);
+        }
+
+        return new self($account, $amount);
+    }
+}`;
+---
+
+<p class="lede">
+  Dos sistemas se integran en un contrato, no en una clase. El contrato es la parte que no
+  puedes cambiar a la ligera, y el lenguaje dentro de él es la parte que el experto de
+  negocio debe reconocer.
+</p>
+
+<h2>Lenguaje ubicuo</h2>
+
+<p>
+  Si el experto dice “liquidación”, el código no dice <code>PaymentResult</code>. Los
+  nombres no son cosméticos: un nombre equivocado fuerza una capa de traducción en la
+  cabeza de alguien, y en esa capa se pierden requisitos.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>El negocio dice</th><th>El código dice</th><th>Por qué duele</th></tr></thead>
+    <tbody>
+      <tr><td>liquidación</td><td><code>PaymentResult</code></td><td>Dos nombres para un concepto; reportes y código discrepan</td></tr>
+      <tr><td>chargeback</td><td><code>refund</code></td><td>Ciclos de vida distintos fundidos en un tipo</td></tr>
+      <tr><td>titular</td><td><code>user</code></td><td>“User” filtra un actor técnico a una regla financiera</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  La prueba es mecánica: lee un caso de uso en voz alta al experto. Cuando interrumpa para
+  corregir una palabra, el código está mal.
+</p>
+
+<h2>Diseño primero</h2>
+
+<p>
+  El contrato se escribe antes de la implementación. Es el artefacto sobre el que dos
+  equipos pueden discrepar barato, y el que sobrevive a una reescritura.
+</p>
+
+<CodeTabs
+  title="OpenAPI 3.1 — la promesa"
+  tabs={[{ label: 'openapi.yaml', lang: 'yaml', code: openapi }]}
+/>
+
+<p>
+  Fíjate en lo que el contrato <strong>no</strong> contiene: nombres de clase, columnas de
+  base de datos, anotaciones de framework. Describe recursos, verbos y modos de fallo — el
+  mismo vocabulario que usa el negocio.
+</p>
+
+<h2>El contrato dentro del código</h2>
+
+<CodeTabs
+  title="La validación pertenece al concepto"
+  tabs={[{ label: 'PHP', lang: 'php', code: phpContract }]}
+/>
+
+<p>
+  El objeto de petición no es un saco de DTO. Es el tipo más pequeño que representa un
+  retiro válido — y el único lugar donde “el importe debe ser positivo” puede vivir.
+</p>
+
+<h2>Reglas de compatibilidad</h2>
+
+<ul>
+  <li><strong>Solo aditivo.</strong> Campos opcionales nuevos y endpoints nuevos son seguros; renombrar y eliminar rompen.</li>
+  <li><strong>Nunca reutilices un nombre de campo</strong> con otro significado. Es una ruptura silenciosa.</li>
+  <li><strong>Versiona el contrato, no la clase.</strong> Versión semántica en la API, no en el namespace interno.</li>
+  <li><strong>Depreca antes de borrar.</strong> Anuncia, avisa en las respuestas, luego elimina — en ese orden.</li>
+  <li><strong>El formato de error es parte del contrato.</strong> Un <code>409</code> con cuerpo no documentado es una promesa rota.</li>
+</ul>
+
+<h2>Prueba la promesa, no la implementación</h2>
+
+<p>
+  Las pruebas de contrato validan que la implementación sigue honrando el documento:
+  validación de esquema en las respuestas, pruebas orientadas al consumidor (Pact) y un paso
+  de CI que compara la spec publicada con la anterior y falla en cambios que rompen.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Lenguaje</th><th>Herramientas de contrato</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td>validadores OpenAPI, <code>league/openapi-psr7-validator</code>, Pact PHP</td></tr>
+      <tr><td>C#</td><td>NSwag, Microsoft.OpenApi, Pact .NET</td></tr>
+      <tr><td>Java</td><td>springdoc-openapi, Pact JVM</td></tr>
+      <tr><td>C++</td><td>validación de spec en pruebas de integración, Pact vía binding</td></tr>
+      <tr><td>TypeScript</td><td>zod/valibot a partir de la spec, Pact JS</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<Note label="La regla" variant="rule">
+  <p>
+    Si el código no se lee como habla el experto de negocio, o si el contrato se sortea, el
+    sistema está roto.
+  </p>
+</Note>
+
+<h2>Sortear es el fallo por defecto</h2>
+
+<p>
+  Los contratos rara vez se rompen por mal diseño — se sortean por conveniencia: un
+  servicio que lee la base de datos del otro, un cliente que accede a un endpoint interno,
+  un campo “temporal” creado directo en producción. Cada rodeo es una segunda fuente de
+  verdad, y dos fuentes de verdad nunca permanecen iguales mucho tiempo.
+</p>
+
+<p>
+  La contramedida es social antes que técnica: el contrato debe ser la única puerta, y la
+  puerta debe ser más barata de usar que la pared.
+</p>

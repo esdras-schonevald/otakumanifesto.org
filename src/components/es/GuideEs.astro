@@ -1,0 +1,66 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  El manifiesto dice qué es obligatorio. Esta guía muestra cómo aparece en el código — una
+  regla a la vez, con la violación primero, porque la gente reconoce su propio código más
+  rápido en el ejemplo equivocado.
+</p>
+
+<h2>El método</h2>
+
+<ol>
+  <li><strong>Lee la regla.</strong> Es una frase y no es negociable.</li>
+  <li><strong>Encuentra la violación.</strong> Mira el ejemplo más pequeño que la rompe.</li>
+  <li><strong>Aplica la corrección mínima.</strong> No un rediseño — el cambio más pequeño que satisface la regla.</li>
+  <li><strong>Haz imposible la regresión.</strong> Un linter, una prueba de arquitectura, una checklist de revisión.</li>
+</ol>
+
+<p>
+  Toda lección termina con un paso de verificación. Una regla que solo vive en un
+  documento es una preferencia; una regla que rompe el build es una restricción.
+</p>
+
+<h2>Rutas</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Ruta</th><th>Pilar</th><th>Qué aprendes</th></tr></thead>
+    <tbody>
+      <tr><td><a href="/es/guide/rules/">Disciplina</a></td><td>O</td><td>Las cuarenta reglas medibles, con propósito, concepto, problema y solución.</td></tr>
+      <tr><td><a href="/es/guide/composition/">Composición</a></td><td>T</td><td>Piezas pequeñas, entradas y salidas explícitas, la aplicación como data pipe.</td></tr>
+      <tr><td><a href="/es/guide/protect-the-core/">Blindaje</a></td><td>A</td><td>Dirección de dependencias, puertos y adaptadores, pruebas de arquitectura.</td></tr>
+      <tr><td><a href="/es/guide/silent-infrastructure/">Silencio</a></td><td>K</td><td>Repositorios, objetos simples y la base de datos como detalle.</td></tr>
+      <tr><td><a href="/es/guide/contracts/">Contratos</a></td><td>U</td><td>Lenguaje ubicuo, design-first y qué promete realmente un contrato.</td></tr>
+      <tr><td><a href="/es/guide/checklist/">Auditoría</a></td><td>—</td><td>Una checklist de revisión para correr contra un repositorio real en una hora.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Sobre los ejemplos de código</h2>
+
+<p>
+  Los ejemplos traen pestañas por lenguaje — PHP, TypeScript y, cuando la regla es
+  estructural, C#, Java y C++ — siempre en pares <strong>Incorrecto</strong> y
+  <strong>Correcto</strong>. El resaltado de sintaxis se genera en tiempo de build (Shiki,
+  tema de VS Code); el sitio no envía JavaScript de cliente.
+</p>
+
+<h2>Lenguajes cubiertos</h2>
+
+<p>
+  PHP, C#, Java, C++ y TypeScript comparten el vocabulario orientado a objetos que esta
+  filosofía necesita: clases, interfaces, excepciones, genéricos (o su aproximación) y un
+  gestor de paquetes. El tooling cambia, y el
+  <a href="/es/languages/">capítulo de referencia</a> lista la herramienta exacta para cada
+  paso de verificación.
+</p>
+
+<Note label="Antes de empezar" variant="warn">
+  <p>
+    No apliques las cuarenta reglas a una base existente en una semana. Elige un módulo,
+    aplícalas allí y deja que el diff sea el argumento. OTAKU se extiende por ejemplo, no
+    por decreto.
+  </p>
+</Note>

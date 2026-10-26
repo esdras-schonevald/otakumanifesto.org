@@ -1,0 +1,135 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const phpEntity = String.raw`namespace App\Domain\Account;
+
+final class Account
+{
+    private function __construct(
+        private AccountId $id,
+        private Money $balance,
+    ) {}
+
+    public function withdraw(Money $amount): self
+    {
+        if ($this->balance->isLessThan($amount)) {
+            throw new InsufficientFunds($this->id);
+        }
+
+        return new self($this->id, $this->balance->subtract($amount));
+    }
+}`;
+
+const tsPorts = String.raw`export interface Accounts {
+  get(id: AccountId): Account;
+  save(...accounts: Account[]): void;
+}
+
+export interface Ledger {
+  record(transfer: Transfer): Receipt;
+}`;
+---
+
+<p class="lede">
+  El dominio es la única parte del sistema que no puede sustituirse. Blindar no es
+  esconderlo — es garantizar que nada más dicte su forma.
+</p>
+
+<h2>La regla de dependencia</h2>
+
+<p>
+  Las dependencias de código fuente apuntan hacia dentro. Nada en un círculo interno puede
+  conocer el nombre de algo en un círculo externo: ni una clase, ni una anotación, ni una
+  interfaz de framework, ni un tipo de base de datos.
+</p>
+
+<pre><code>Interface  ──▶  Application  ──▶  Domain
+Infrastructure ──────────────────▶  Domain</code></pre>
+
+<p>
+  Las flechas son imports en tiempo de compilación. Si <code>Domain/Account.php</code>
+  importa <code>Doctrine\ORM\Mapping\Entity</code>, la flecha apunta al lado equivocado y
+  el framework pasa a ser dueño de tus reglas de negocio.
+</p>
+
+<h2>Puertos y adaptadores</h2>
+
+<p>
+  El dominio declara lo que necesita como un puerto. La infraestructura lo implementa como
+  un adaptador. El dominio se queda con el vocabulario; el adaptador con el proveedor.
+</p>
+
+<CodeTabs
+  title="El mismo puerto, dos lenguajes"
+  tabs={[{ label: 'TypeScript', lang: 'ts', code: tsPorts }]}
+/>
+
+<p>
+  En PHP, C# y Java la forma es la misma con <code>interface</code>; en C++, una clase
+  abstracta con destructor virtual. Lo importante es que el contrato pertenece al dominio y
+  no carga detalle alguno.
+</p>
+
+<h2>Una entidad que no sabe de nada</h2>
+
+<CodeTabs
+  title="Entidad"
+  tabs={[{ label: 'PHP', lang: 'php', code: phpEntity }]}
+/>
+
+<p>
+  Sin anotaciones, sin clase base, sin active record. La entidad puede construirse en una
+  prueba unitaria sin base de datos, sin contenedor y sin levantar framework.
+</p>
+
+<h2>Los anti-patrones</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Síntoma</th><th>Qué significa</th><th>Corrección</th></tr></thead>
+    <tbody>
+      <tr><td>La entidad extiende una clase base del framework</td><td>El framework es dueño del ciclo de vida</td><td>Objeto simple + mapeo en el adaptador</td></tr>
+      <tr><td>El dominio importa <code>EntityManager</code>, <code>DbContext</code>, <code>Session</code></td><td>La persistencia está en el núcleo</td><td>Puerto de repositorio en el dominio</td></tr>
+      <tr><td>Anotaciones de validación en campos del dominio</td><td>Reglas de transporte se volvieron reglas de negocio</td><td>Validar en el caso de uso o en el objeto de valor</td></tr>
+      <tr><td>El dominio lanza excepciones HTTP</td><td>El adaptador se filtró hacia dentro</td><td>Excepciones de dominio + mapa en el borde</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Convierte la flecha en fallo de build</h2>
+
+<p>
+  Una regla de dependencia garantizada por revisión decae. Garantízala con una herramienta
+  que rompa el pipeline:
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Lenguaje</th><th>Prueba de arquitectura</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td><code>deptrac</code>, reglas custom de PHPStan</td></tr>
+      <tr><td>C#</td><td><code>NetArchTest</code>, NDepend</td></tr>
+      <tr><td>Java</td><td><code>ArchUnit</code></td></tr>
+      <tr><td>C++</td><td>reglas de dependencia por target en CMake, <code>include-what-you-use</code></td></tr>
+      <tr><td>TypeScript</td><td><code>ts-arch</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<Note label="Migración" variant="warn">
+  <p>
+    No necesitas parar el mundo. Extrae el caso de uso primero, dale puertos, luego mueve
+    las llamadas al ORM a adaptadores, una por una. El compilador y la prueba de
+    arquitectura avisan cuando la flecha por fin apunta hacia dentro.
+  </p>
+</Note>
+
+<h2>Qué no es “blindar”</h2>
+
+<p>
+  No es una estructura de cuatro carpetas con el mismo modelo copiado cuatro veces. Si la
+  entidad de dominio y la de base de datos son idénticas, la frontera es ceremonial —
+  moviste código, no dependencias. La prueba es el grafo de imports, no el árbol de
+  directorios.
+</p>

@@ -20,8 +20,8 @@ A rule page is generated from data — adding a rule means adding one entry, not
 ## Languages
 
 `activeLocales` in `src/i18n/ui.ts` controls the switcher. A locale is listed only
-when **every** page exists in it: there is no silent fallback to English. Portuguese
-is complete today; the other five keep their translations in code and ship when their
+when **every** page exists in it: there is no silent fallback to English. Portuguese and Spanish
+are complete; the other four keep their translations in code and ship when their
 chapters are finished.
 
 ## Code samples

@@ -5,6 +5,7 @@ import Note from '../components/Note.astro';
 import { groups } from '../data/ruleGroups';
 import { neighbourRule } from '../data/rulesIndex';
 import { rules } from '../data/rules';
+import { rulesEs } from '../i18n/rules.es';
 import { labels } from '../i18n/labels';
 import type { Locale } from '../data/ruleGroups';
 import type { RuleContent, Lang } from '../data/rulesContent1';
@@ -27,18 +28,22 @@ const toTabs = (set: Partial<Record<Lang, string>>) =>
   }));
 
 const base = locale === 'en' ? '' : `/${locale}`;
+
+const overlay = locale === 'es' ? rulesEs[rule.id] : undefined;
+const text = (field: 'title' | 'purpose' | 'concept' | 'problem' | 'solution' | 'check'): string =>
+  overlay?.[field] ?? rule[field][locale] ?? rule[field].en;
 ---
 
 <Doc
-  title={rule.title[locale] ?? rule.title.en}
+  title={text('title')}
   kicker={`${t.rule} ${String(rule.id).padStart(2, '0')} · ${group?.title[locale] ?? ''}`}
-  description={rule.purpose[locale] ?? rule.purpose.en}
+  description={text('purpose')}
   path={`/guide/rules/${rule.slug}`}
   locale={locale}
   translated
   pager={false}
 >
-  <p class="lede">{rule.purpose[locale] ?? rule.purpose.en}</p>
+  <p class="lede">{text('purpose')}</p>
 
   <div class="rule-statement">
     <span class="rule-statement__label">{t.theRule}</span>
@@ -46,13 +51,13 @@ const base = locale === 'en' ? '' : `/${locale}`;
   </div>
 
   <h2>{t.sections.concept}</h2>
-  <p>{rule.concept[locale] ?? rule.concept.en}</p>
+  <p>{text('concept')}</p>
 
   <h2>{t.sections.problem}</h2>
-  <p>{rule.problem[locale] ?? rule.problem.en}</p>
+  <p>{text('problem')}</p>
 
   <h2>{t.sections.solution}</h2>
-  <p>{rule.solution[locale] ?? rule.solution.en}</p>
+  <p>{text('solution')}</p>
 
   <WrongRight
     wrong={toTabs(rule.wrong)}
@@ -62,7 +67,7 @@ const base = locale === 'en' ? '' : `/${locale}`;
   />
 
   <h2>{t.sections.check}</h2>
-  <p>{rule.check[locale] ?? rule.check.en}</p>
+  <p>{text('check')}</p>
 
   <Note label={t.sections.pillar} variant="rule">
     <p>

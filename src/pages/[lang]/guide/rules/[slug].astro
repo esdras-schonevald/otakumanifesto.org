@@ -1,15 +1,20 @@
 ---
 import RuleDetail from '../../../../components/RuleDetail.astro';
 import { allRules } from '../../../../data/rulesIndex';
+import { activeLocales } from '../../../../i18n/ui';
 
 export function getStaticPaths() {
-  return allRules.map((rule) => ({
-    params: { lang: 'pt-br', slug: rule.slug },
-    props: { rule },
-  }));
+  const locales = activeLocales.filter((code) => code !== 'en');
+
+  return locales.flatMap((lang) =>
+    allRules.map((rule) => ({
+      params: { lang, slug: rule.slug },
+      props: { rule, lang },
+    })),
+  );
 }
 
-const { rule } = Astro.props;
+const { rule, lang } = Astro.props;
 ---
 
-<RuleDetail rule={rule} locale="pt-br" />
+<RuleDetail rule={rule} locale={lang} />
