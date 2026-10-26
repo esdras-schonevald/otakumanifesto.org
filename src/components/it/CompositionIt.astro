@@ -1,0 +1,138 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const phpPipe = String.raw`final class TransferMoney
+{
+    public function __construct(
+        private Accounts $accounts,
+        private Ledger $ledger,
+    ) {}
+
+    public function __invoke(Transfer $transfer): Receipt
+    {
+        $source = $this->accounts->get($transfer->source());
+        $target = $this->accounts->get($transfer->target());
+
+        $debited = $source->debit($transfer->amount());
+        $credited = $target->credit($transfer->amount());
+
+        $this->accounts->save($debited, $credited);
+
+        return $this->ledger->record($transfer);
+    }
+}`;
+
+const tsPipe = String.raw`class TransferMoney {
+  constructor(
+    private readonly accounts: Accounts,
+    private readonly ledger: Ledger,
+  ) {}
+
+  run(transfer: Transfer): Receipt {
+    const source = this.accounts.get(transfer.source);
+    const target = this.accounts.get(transfer.target);
+
+    this.accounts.save(
+      source.debit(transfer.amount),
+      target.credit(transfer.amount),
+    );
+
+    return this.ledger.record(transfer);
+  }
+}`;
+---
+
+<p class="lede">
+  Uno strumento Unix fa una cosa e parla tramite stdin e stdout. Un componente qui fa una cosa e
+  parla tramite un contratto. Tutto il resto — come viene invocato, dove gira, chi lo possiede — è
+  configurazione.
+</p>
+
+<h2>Una parte, un compito</h2>
+
+<p>
+  Il test non è “è piccolo?”, ma “riesco a descriverlo senza <em>e</em>?”. Una classe che valida
+  un trasferimento <em>e</em> lo persiste ha due motivi per cambiare e due modalità di guasto da
+  testare. Dividi sulla <em>e</em>.
+</p>
+
+<h2>Il data pipe</h2>
+
+<p>
+  L’input arriva da un adattatore (controller HTTP, comando CLI, consumatore di coda), attraversa
+  il nucleo come dati semplici ed esce da un altro adattatore. Il nucleo non sa mai quale
+  adattatore lo ha chiamato.
+</p>
+
+<CodeTabs
+  title="Un caso d’uso riceve porte, non framework"
+  tabs={[
+    { label: 'PHP', lang: 'php', code: phpPipe },
+    { label: 'TypeScript', lang: 'ts', code: tsPipe },
+  ]}
+/>
+
+<p>
+  Nota cosa questa classe non importa: niente HTTP, ORM o container. Conosce due porte con nomi
+  di business, e nient’altro. È il tubo.
+</p>
+
+<h2>La composizione avviene al confine</h2>
+
+<p>
+  Qualcuno deve decidere quale implementazione è reale. Quella decisione appartiene a una radice
+  di composizione — un solo punto, di solito l’entry point, dove l’infrastruttura viene collegata
+  al nucleo.
+</p>
+
+<Note label="Odore" variant="warn">
+  <p>
+    Se una classe di dominio chiede una dipendenza al container, la composizione è filtrata
+    all’interno. <code>$container-&gt;get(...)</code> dentro un caso d’uso è un parametro nascosto
+    e una cucitura impossibile da testare.
+  </p>
+</Note>
+
+<h2>Le parti devono essere sostituibili, non solo piccole</h2>
+
+<ol>
+  <li><strong>Un contratto</strong> che descrive il comportamento in termini di dominio.</li>
+  <li><strong>Nessun tipo che filtra</strong> dall’implementazione (niente <code>QueryBuilder</code> in firma).</li>
+  <li><strong>Un’implementazione per ruolo</strong> in produzione, e una in memoria nei test.</li>
+</ol>
+
+<p>
+  L’implementazione in memoria è il test di architettura più economico che scriverai: se il caso
+  d’uso non gira contro un fake, non è composto — è fuso a un framework.
+</p>
+
+<h2>I cicli sono il segnale di guasto</h2>
+
+<p>
+  La composizione rende visibili le dipendenze. Quando il grafo contiene un ciclo, due parti in
+  realtà sono una, oppure una responsabilità è nel posto sbagliato. Gli strumenti che disegnano il
+  grafo — <code>deptrac</code>, <code>ArchUnit</code>, <code>jdeps</code>,
+  <code>include-what-you-use</code> — trasformano quel segnale in un errore di build.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Linguaggio</th><th>Meccanismo di composizione</th><th>Verifica del grafo</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td>iniezione dal costruttore, container PSR-11 al confine</td><td>deptrac</td></tr>
+      <tr><td>C#</td><td>iniezione dal costruttore, <code>IServiceCollection</code></td><td>NetArchTest</td></tr>
+      <tr><td>Java</td><td>iniezione dal costruttore, wiring manuale o CDI</td><td>ArchUnit, <code>jdeps</code></td></tr>
+      <tr><td>C++</td><td>riferimenti/puntatori nel costruttore, wiring nel <code>main</code></td><td>grafo di build, IWYU</td></tr>
+      <tr><td>TypeScript</td><td>iniezione dal costruttore, wiring nell’entry point</td><td>ts-arch</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Cosa non è composizione</h2>
+
+<p>
+  Non è “estrarre un’interfaccia per tutto”. Un’interfaccia con una sola implementazione e nessun
+  fake di test è cerimonia. La composizione si giustifica con una seconda implementazione — reale
+  o in memoria.
+</p>

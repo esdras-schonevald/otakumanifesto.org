@@ -1,0 +1,129 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const phpEntity = String.raw`namespace App\Domain\Account;
+
+final class Account
+{
+    private function __construct(
+        private AccountId $id,
+        private Money $balance,
+    ) {}
+
+    public function withdraw(Money $amount): self
+    {
+        if ($this->balance->isLessThan($amount)) {
+            throw new InsufficientFunds($this->id);
+        }
+
+        return new self($this->id, $this->balance->subtract($amount));
+    }
+}`;
+
+const tsPorts = String.raw`export interface Accounts {
+  get(id: AccountId): Account;
+  save(...accounts: Account[]): void;
+}
+
+export interface Ledger {
+  record(transfer: Transfer): Receipt;
+}`;
+---
+
+<p class="lede">
+  Il dominio è l’unica parte del sistema che non può essere sostituita. Proteggere non è
+  nasconderlo — è garantire che nient’altro possa dettarne la forma.
+</p>
+
+<h2>La regola delle dipendenze</h2>
+
+<p>
+  Le dipendenze del codice sorgente puntano verso l’interno. Nulla in un cerchio interno può
+  conoscere il nome di qualcosa in un cerchio esterno: né una classe, né un’annotazione, né
+  un’interfaccia di framework, né un tipo di database.
+</p>
+
+<pre><code>Interface  ──▶  Application  ──▶  Domain
+Infrastructure ──────────────────▶  Domain</code></pre>
+
+<p>
+  Le frecce sono import in fase di compilazione. Se <code>Domain/Account.php</code> importa
+  <code>Doctrine\ORM\Mapping\Entity</code>, la freccia punta dalla parte sbagliata e il framework
+  diventa proprietario delle tue regole di business.
+</p>
+
+<h2>Porte e adattatori</h2>
+
+<p>
+  Il dominio dichiara ciò di cui ha bisogno come una porta. L’infrastruttura la implementa come un
+  adattatore. Il dominio tiene il vocabolario; l’adattatore tiene il fornitore.
+</p>
+
+<CodeTabs
+  title="La stessa porta, due linguaggi"
+  tabs={[{ label: 'TypeScript', lang: 'ts', code: tsPorts }]}
+/>
+
+<p>
+  In PHP, C# e Java la forma è la stessa con <code>interface</code>; in C++, una classe astratta
+  con distruttore virtuale. L’importante è che il contratto appartenga al dominio e non porti
+  alcun dettaglio.
+</p>
+
+<h2>Un’entità che non sa nulla</h2>
+
+<CodeTabs
+  title="Entità"
+  tabs={[{ label: 'PHP', lang: 'php', code: phpEntity }]}
+/>
+
+<p>
+  Niente annotazioni, niente classe base, niente active record. L’entità può essere costruita in
+  un test unitario senza database, senza container e senza avviare un framework.
+</p>
+
+<h2>Gli anti-pattern</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Sintomo</th><th>Cosa significa</th><th>Correzione</th></tr></thead>
+    <tbody>
+      <tr><td>L’entità estende una classe base del framework</td><td>Il framework possiede il ciclo di vita</td><td>Oggetto semplice + mapping nell’adattatore</td></tr>
+      <tr><td>Il dominio importa <code>EntityManager</code>, <code>DbContext</code>, <code>Session</code></td><td>La persistenza è nel nucleo</td><td>Porta di repository nel dominio</td></tr>
+      <tr><td>Annotazioni di validazione sui campi del dominio</td><td>Le regole di trasporto sono diventate regole di business</td><td>Validare nel caso d’uso o nell’oggetto valore</td></tr>
+      <tr><td>Il dominio lancia eccezioni HTTP</td><td>L’adattatore è filtrato all’interno</td><td>Eccezioni di dominio + mapping al confine</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Rendi la freccia un errore di build</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Linguaggio</th><th>Test di architettura</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td><code>deptrac</code>, regole PHPStan personalizzate</td></tr>
+      <tr><td>C#</td><td><code>NetArchTest</code>, NDepend</td></tr>
+      <tr><td>Java</td><td><code>ArchUnit</code></td></tr>
+      <tr><td>C++</td><td>regole di dipendenza per target in CMake, <code>include-what-you-use</code></td></tr>
+      <tr><td>TypeScript</td><td><code>ts-arch</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<Note label="Migrazione" variant="warn">
+  <p>
+    Non devi fermare il mondo. Estrai prima il caso d’uso, dagli delle porte, poi sposta le
+    chiamate all’ORM negli adattatori, una alla volta. Il compilatore e il test di architettura ti
+    avvisano quando la freccia punta finalmente verso l’interno.
+  </p>
+</Note>
+
+<h2>Cosa non è “proteggere”</h2>
+
+<p>
+  Non è una struttura di quattro cartelle con lo stesso modello copiato quattro volte. Se
+  l’entità di dominio e quella di database sono identiche, il confine è cerimoniale — hai spostato
+  codice, non dipendenze. Il test è il grafo degli import, non l’albero delle directory.
+</p>

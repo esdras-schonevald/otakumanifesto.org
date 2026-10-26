@@ -4,7 +4,7 @@ import type { Locale } from '../data/ruleGroups';
  * Languages offered in the switcher. A locale is only listed here when *every*
  * page exists in it — no silent fallback to English.
  */
-export const activeLocales: Locale[] = ['en', 'pt-br', 'es', 'fr'];
+export const activeLocales: Locale[] = ['en', 'pt-br', 'es', 'fr', 'it'];
 
 /** All locales with at least partial translations (kept for the next batches). */
 export const locales: Locale[] = ['en', 'pt-br', 'es', 'ja', 'zh', 'fr', 'it'];

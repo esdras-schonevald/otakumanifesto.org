@@ -1,0 +1,102 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  La filosofia è cresciuta oltre il progetto che l’ha generata. Questo sito è la sua casa ora —
+  indipendente da linguaggio, gestore di pacchetti o fornitore.
+</p>
+
+<h2>Perché una casa separata</h2>
+
+<p>
+  OTAKU è nato dentro <a href="https://phprise.org">PHPRise</a>, una fondazione PHP. Quella
+  origine era un incidente della prima implementazione, non una proprietà dell’idea: le regole
+  parlano di indentazione, collezioni, direzione delle dipendenze e contratti, e ogni linguaggio
+  orientato agli oggetti può esprimerli.
+</p>
+
+<p>
+  Tenere il manifesto dentro un’organizzazione PHP commetteva due errori insieme: suggeriva che
+  la filosofia richiedesse PHP e faceva portare ai repository PHP la copia di un documento che
+  non parlava di loro. PHPRise ora punta qui invece di duplicarlo.
+</p>
+
+<h2>Autore</h2>
+
+<p>
+  Scritto e mantenuto da <a href="https://esdras.me">Esdras Schönevald</a>, Lead Software
+  Engineer e maintainer di PHPRise. La filosofia viene da due decenni a costruire sistemi di
+  pagamento, identità e sanità — e dall’esperienza ricorrente che la parte costosa del software
+  non è mai il codice che scrivi, ma la struttura che mantieni.
+</p>
+
+<p>
+  I debiti intellettuali sono elencati nel <a href="https://esdras.me/#inspirations">sito
+  personale</a>: Object Calisthenics (Jeff Bay), Clean Architecture (Robert C. Martin), DDD
+  (Eric Evans), la filosofia Unix, Conway, Parnas e Dijkstra.
+</p>
+
+<h2>Licenza</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Parte</th><th>Licenza</th><th>Puoi</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Testo del manifesto e della guida</td>
+        <td><a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></td>
+        <td>Condividere e adattare, con attribuzione e la stessa licenza</td>
+      </tr>
+      <tr>
+        <td>Esempi di codice</td>
+        <td>MIT</td>
+        <td>Usare, modificare e vendere, con attribuzione nel sorgente</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  Attribuzione: un link a <code>https://otakumanifesto.org</code> e il nome dell’autore. È
+  sufficiente.
+</p>
+
+<h2>Contribuire</h2>
+
+<p>
+  Il codice è pubblico su
+  <a href="https://github.com/esdras-schonevald/otakumanifesto.org">github.com/esdras-schonevald/otakumanifesto.org</a>.
+  Il sito è un build statico Astro — senza runtime, senza database.
+</p>
+
+<ul>
+  <li><strong>Correzioni</strong> (refusi, link rotti, codice errato) — apri una issue o una PR diretta.</li>
+  <li><strong>Nuovi esempi</strong> in un altro linguaggio — benvenuti, purché la regola non cambi.</li>
+  <li><strong>Cambiare una regola</strong> — apri prima una issue. Le regole sono difficili da cambiare di proposito; è questo il punto.</li>
+</ul>
+
+<h2>Versionamento</h2>
+
+<p>
+  La filosofia è versionata per data, non per versione semantica. Una regola non viene mai
+  modificata in silenzio: i cambiamenti sono annunciati, discussi e riflessi nella guida con un
+  esempio di cosa è cambiato.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Versione</th><th>Cambiamento</th></tr></thead>
+    <tbody>
+      <tr><td>2026.10</td><td>Seconda edizione: quaranta regole misurabili, complessità ciclomatica come metrica principale, TypeScript e traduzioni.</td></tr>
+      <tr><td>2026.10</td><td>Prima edizione pubblica fuori da PHPRise: cinque pilastri, tre forme, guida multi-linguaggio.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<Note label="Sullo zelo">
+  <p>
+    Una filosofia che diventa un test di personalità ha fallito. Le regole riguardano il codice,
+    e il codice può cambiare. Discuti con la regola, mai con la persona.
+  </p>
+</Note>

@@ -1,0 +1,128 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  Una filosofia che non può essere verificata è decorazione. Questo è l’audit che eseguo su un
+  repository reale — un’ora, senza riscrivere nulla, solo prove.
+</p>
+
+<h2>Prima di iniziare</h2>
+
+<ol>
+  <li>Apri il repository sul branch predefinito, con CI verde o rossa nota.</li>
+  <li>Esegui lo strumento di complessità ed esporta l’elenco dei metodi sopra 5.</li>
+  <li>Genera il grafo delle dipendenze (<code>deptrac</code>, <code>ArchUnit</code>, <code>jdeps</code>, <code>cmake --graphviz</code>).</li>
+  <li>Limita il tempo di ogni sezione. Stai raccogliendo prove, non correggendo.</li>
+</ol>
+
+<h2>O — Disciplina (regole 1–17)</h2>
+
+<ul class="checklist">
+  <li><strong>Complessità:</strong> nessun metodo sopra 5.</li>
+  <li>Nessun metodo con due livelli di indentazione.</li>
+  <li><code>else</code> non compare (cerca e giustifica ogni occorrenza).</li>
+  <li><code>switch</code>/<code>case</code> non compare.</li>
+  <li>Nessun numero o stringa magica.</li>
+  <li>Nessuna classe sopra 50 righe; nessun metodo sopra 20; nessun pacchetto sopra 10 classi.</li>
+  <li>Nessuna classe con più di due variabili di istanza.</li>
+  <li>Nessun metodo o costruttore con più di due parametri.</li>
+  <li>Nessuna interfaccia con più di due metodi.</li>
+  <li>Nessuna abbreviazione nei nomi pubblici.</li>
+  <li>I booleani iniziano con <code>is</code>/<code>has</code>/<code>can</code>/<code>should</code>; i metodi con un verbo.</li>
+  <li>Costanti in <code>UPPER_SNAKE_CASE</code>; proprietà e metodi in <code>camelCase</code>.</li>
+</ul>
+
+<h2>T — Composizione (regole 18–24)</h2>
+
+<ul class="checklist">
+  <li>Ogni collezione è una classe a sé.</li>
+  <li>Nessuna catena di chiamate con più di un punto, tranne i builder.</li>
+  <li>Nessun metodo statico, tranne fabbriche e funzioni pure.</li>
+  <li>Comandi e query separati; i metodi che restituiscono un valore non hanno effetti.</li>
+  <li>Nessuno stato globale o singleton; le dipendenze arrivano dal costruttore.</li>
+  <li>I casi d’uso sono classi con un metodo pubblico.</li>
+  <li>Il wiring avviene in un’unica radice di composizione.</li>
+  <li>Il grafo delle dipendenze non ha cicli.</li>
+</ul>
+
+<h2>A — Protezione (regole 25–31)</h2>
+
+<ul class="checklist">
+  <li>Niente getter, setter o proprietà pubbliche mutabili.</li>
+  <li>Proprietà private; <code>protected</code> solo per ereditarietà da framework.</li>
+  <li>Classi <code>final</code> o <code>sealed</code> per impostazione predefinita.</li>
+  <li>Nessuna ereditarietà, tranne classi base di framework.</li>
+  <li>Input validati nei costruttori e nei metodi pubblici.</li>
+  <li>Le precondizioni falliscono presto, con un’eccezione di dominio.</li>
+  <li>I parametri di input non vengono mai mutati.</li>
+  <li>Nessun file di dominio importa framework, ORM, HTTP o database.</li>
+  <li>Un test di architettura impone la regola dei livelli in CI.</li>
+</ul>
+
+<h2>K — Silenzio (regole 32–36)</h2>
+
+<ul class="checklist">
+  <li>Proprietà immutabili; i metodi restituiscono nuove istanze.</li>
+  <li>I metodi che restituiscono collezioni restituiscono una collezione vuota, mai <code>null</code>.</li>
+  <li>Il fallimento è esplicito — Result/Either o eccezione — mai <code>null</code>.</li>
+  <li>Nessuna dipendenza nascosta, metodo magico o conversione implicita.</li>
+  <li>Nessun SQL, HTTP o percorso di file nel dominio.</li>
+  <li>I repository si comportano come collezioni; esiste un’implementazione in memoria.</li>
+  <li>Le transazioni sono aperte dall’infrastruttura, non dal dominio.</li>
+</ul>
+
+<h2>U — Contratti (regole 37–40)</h2>
+
+<ul class="checklist">
+  <li>Primitivi e stringhe con significato sono oggetti valore.</li>
+  <li>Nessun <code>mixed</code>/<code>array</code>/<code>object</code> fuori da serializzazione esplicita.</li>
+  <li>Ogni metodo pubblico è dichiarato in un’interfaccia.</li>
+  <li>I commenti spiegano il perché e vivono nei contratti.</li>
+  <li>Esiste un contratto pubblicato (OpenAPI/IDL), versionato e allineato al vocabolario.</li>
+  <li>Le modifiche che rompono sono rilevate in CI (diff della spec).</li>
+  <li>Nessun client accede direttamente al database o a un endpoint interno.</li>
+</ul>
+
+<h2>Punteggio</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Voto</th><th>Verdetto</th><th>Azione</th></tr></thead>
+    <tbody>
+      <tr><td>90–100%</td><td>Conforme</td><td>Mantieni i check di CI; riedita ogni trimestre.</td></tr>
+      <tr><td>70–89%</td><td>Quasi conforme</td><td>Correggi le sezioni che falliscono nello sprint successivo; ogni fallimento ha un responsabile.</td></tr>
+      <tr><td>40–69%</td><td>Parziale</td><td>Una sezione per sprint. Non iniziare una riscrittura.</td></tr>
+      <tr><td>&lt; 40%</td><td>Non applicato</td><td>La base non è OTAKU. Dillo e decidi se migrare — l’onestà costa meno della cerimonia.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Ganci di CI</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Check</th><th>PHP</th><th>C#</th><th>Java</th><th>C++</th><th>TypeScript</th></tr></thead>
+    <tbody>
+      <tr><td>Complessità ≤ 5</td><td>PHP_CodeSniffer</td><td>CA1502</td><td>PMD</td><td>clang-tidy</td><td>ESLint <code>complexity</code></td></tr>
+      <tr><td>Dimensione e stile</td><td>PHP_CodeSniffer</td><td>StyleCop</td><td>Checkstyle</td><td>clang-tidy</td><td>ESLint</td></tr>
+      <tr><td>Dipendenze</td><td>deptrac</td><td>NetArchTest</td><td>ArchUnit</td><td>target CMake</td><td>ts-arch</td></tr>
+      <tr><td>Contratto</td><td colspan="5">diff della spec + validazione dello schema nei test di integrazione</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Cosa fare con il risultato</h2>
+
+<p>
+  Pubblica il voto nel README, con la data e il commit auditato. Non per umiliare nessuno — per
+  rendere visibile il progresso. Un repository che passa dal 45% al 72% in un trimestre è una
+  storia di successo, non di fallimento.
+</p>
+
+<Note label="Regola" variant="rule">
+  <p>
+    Ogni voce che fallisce deve nominare un responsabile e una data, altrimenti non è un rilievo —
+    è un’opinione.
+  </p>
+</Note>

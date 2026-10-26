@@ -1,0 +1,152 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  La modularità non si revisiona dopo i fatti — si impone con la forma del repository. Ogni
+  repository deve rientrare esattamente in uno dei tre archetipi. Non esiste una quarta opzione
+  né un ibrido.
+</p>
+
+<h2>1 — Atomo</h2>
+
+<p>
+  La più piccola unità di granularità possibile. Se un componente può essere ulteriormente
+  diviso, non è un atomo.
+</p>
+
+<ul>
+  <li><strong>Struttura:</strong> piatta. Un solo livello di directory dentro la radice del codice.</li>
+  <li><strong>Regola:</strong> nessuna suddivisione. Soddisfa un contratto specifico.</li>
+  <li><strong>Test:</strong> riesci a descriverlo in una frase senza “e”?</li>
+  <li><strong>Esempi:</strong> un oggetto valore, un’utilità di stringa, un singolo client HTTP.</li>
+</ul>
+
+<h2>2 — Assemblaggio</h2>
+
+<p>
+  Un punto di connessione. Gli assemblaggi non contengono logica; orchestrano l’unione di atomi
+  perché una sola dichiarazione di dipendenza installi dieci pacchetti.
+</p>
+
+<ul>
+  <li><strong>Struttura:</strong> nessun codice sorgente. La composizione è dichiarata nel manifest del pacchetto.</li>
+  <li><strong>Regola:</strong> se ha comportamento, non è un assemblaggio.</li>
+  <li><strong>Test:</strong> elimini il manifest e resta solo un README?</li>
+  <li><strong>Esempi:</strong> un meta-pacchetto che raggruppa gli atomi HTTP, un bundle “commons”.</li>
+</ul>
+
+<h2>3 — Applicazione</h2>
+
+<p>
+  Il sistema vivo. Non è una libreria: è l’implementazione del cuore del business, seguendo Clean
+  Architecture e DDD.
+</p>
+
+<ul>
+  <li><strong>Struttura:</strong> dominio, applicazione, infrastruttura, interfaccia — dipendenze verso l’interno.</li>
+  <li><strong>Regola:</strong> resta snella. Tutto ciò che è generico scende negli atomi.</li>
+  <li><strong>Test:</strong> contiene un caso d’uso che un esperto di business riconoscerebbe?</li>
+  <li><strong>Esempi:</strong> un gateway di pagamento, un servizio di identità.</li>
+</ul>
+
+<h2>La stessa idea in quattro ecosistemi</h2>
+
+<p>I nomi degli artefatti cambiano; le forme no.</p>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>Forma</th><th>PHP / Composer</th><th>C# / NuGet</th><th>Java / Maven</th><th>C++ / Conan</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Atomo</strong></td>
+        <td><code>type: library</code>, un namespace</td>
+        <td>class library, un namespace</td>
+        <td>jar, un pacchetto</td>
+        <td>header + library, un namespace</td>
+      </tr>
+      <tr>
+        <td><strong>Assemblaggio</strong></td>
+        <td><code>type: metapackage</code>, solo <code>require</code></td>
+        <td>pacchetto senza codice, solo <code>PackageReference</code></td>
+        <td>pom con solo <code>&lt;dependency&gt;</code></td>
+        <td>conanfile che fa solo <code>requires</code></td>
+      </tr>
+      <tr>
+        <td><strong>Applicazione</strong></td>
+        <td><code>type: project</code>, <code>src/Domain</code>, <code>src/Application</code>…</td>
+        <td>progetto eseguibile con livelli</td>
+        <td>app con moduli di livello</td>
+        <td>target eseguibile con livelli</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Come classificare un repository</h2>
+
+<p>Fai le tre domande in ordine e fermati al primo “sì”.</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Domanda</th><th>Se sì</th></tr></thead>
+    <tbody>
+      <tr><td>Contiene casi d’uso e regole di business?</td><td>Applicazione</td></tr>
+      <tr><td>Contiene solo dichiarazioni di dipendenze?</td><td>Assemblaggio</td></tr>
+      <tr><td>Sta in una frase con una responsabilità?</td><td>Atomo</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  Se nessuna risposta è “sì”, il repository non è ancora pronto a esistere. Non è un giudizio
+  estetico: è il segnale che il confine non è ancora stato trovato.
+</p>
+
+<h2>Perché tre, e non di più</h2>
+
+<p>
+  Più forme significano più posti dove nascondersi. Un quarto archetipo — “utility condivise”,
+  “common”, “core” — diventa sempre il luogo dove si accumulano cose senza rapporto, finché
+  nessuno riesce più a cancellare nulla.
+</p>
+
+<p>
+  Tre forme danno anche una regola meccanica per le fughe: codice che appartiene a un atomo ma
+  vive in un’applicazione finisce copiato in un’altra applicazione. La tassonomia lo rende
+  visibile in revisione, perché il revisore fa una sola domanda: <em>questo file appartiene a
+  questa forma?</em>
+</p>
+
+<Note label="Anti-pattern" variant="warn">
+  <p>
+    Un repository chiamato <code>utils</code>, <code>shared</code> o <code>core</code> con più di
+    una responsabilità. Non è un assemblaggio (ha logica) né un atomo (fa più cose). È la forma
+    che OTAKU elimina.
+  </p>
+</Note>
+
+<h2>Imposizione</h2>
+
+<p>
+  Una tassonomia che vive in un documento è un suggerimento. Per imporla, metti la forma in
+  metadati leggibili dalla macchina e verificala in CI:
+</p>
+
+<ul>
+  <li><strong>PHP:</strong> <code>composer.json</code> → <code>type</code> deve essere <code>library</code>, <code>metapackage</code> o <code>project</code>.</li>
+  <li><strong>C#:</strong> un assemblaggio non può avere file <code>.cs</code>.</li>
+  <li><strong>Java:</strong> un modulo di assemblaggio deve avere <code>src/main/java</code> vuoto.</li>
+  <li><strong>C++:</strong> un assemblaggio è headers-only o assente; il <code>conanfile</code> dichiara <code>requires</code> e nessun <code>sources()</code>.</li>
+</ul>
+
+<p>
+  Per la forma applicazione la verifica è strutturale: assicurati che il livello dominio non
+  importi infrastruttura, framework o database. Ogni ecosistema ha uno strumento —
+  <code>deptrac</code> (PHP), <code>NetArchTest</code> (C#), <code>ArchUnit</code> (Java), regole
+  di target in CMake (C++).
+</p>
+
+<p><a href="/it/guide/">Continua verso la guida →</a></p>

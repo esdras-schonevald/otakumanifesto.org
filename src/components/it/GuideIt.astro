@@ -1,0 +1,66 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  Il manifesto dice cosa è obbligatorio. Questa guida mostra come appare nel codice — una regola
+  alla volta, con la violazione per prima, perché si riconosce più in fretta il proprio codice
+  nell’esempio sbagliato.
+</p>
+
+<h2>Il metodo</h2>
+
+<ol>
+  <li><strong>Leggi la regola.</strong> È una frase e non è negoziabile.</li>
+  <li><strong>Trova la violazione.</strong> Guarda il più piccolo esempio che la rompe.</li>
+  <li><strong>Applica la correzione minima.</strong> Non un redesign — la modifica più piccola che soddisfa la regola.</li>
+  <li><strong>Rendi impossibile la regressione.</strong> Un linter, un test di architettura, una checklist di revisione.</li>
+</ol>
+
+<p>
+  Ogni lezione termina con un passo di verifica. Una regola che vive solo in un documento è una
+  preferenza; una regola che rompe la build è un vincolo.
+</p>
+
+<h2>Percorsi</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Percorso</th><th>Pilastro</th><th>Cosa impari</th></tr></thead>
+    <tbody>
+      <tr><td><a href="/it/guide/rules/">Disciplina</a></td><td>O</td><td>Le quaranta regole misurabili, con scopo, concetto, problema e soluzione.</td></tr>
+      <tr><td><a href="/it/guide/composition/">Composizione</a></td><td>T</td><td>Parti piccole, input e output espliciti, l’applicazione come data pipe.</td></tr>
+      <tr><td><a href="/it/guide/protect-the-core/">Protezione</a></td><td>A</td><td>Direzione delle dipendenze, porte e adattatori, test di architettura.</td></tr>
+      <tr><td><a href="/it/guide/silent-infrastructure/">Silenzio</a></td><td>K</td><td>Repository, oggetti semplici e il database come dettaglio.</td></tr>
+      <tr><td><a href="/it/guide/contracts/">Contratti</a></td><td>U</td><td>Linguaggio ubiquo, design-first e cosa promette davvero un contratto.</td></tr>
+      <tr><td><a href="/it/guide/checklist/">Audit</a></td><td>—</td><td>Una checklist di revisione da eseguire su un repository reale in un’ora.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Sugli esempi di codice</h2>
+
+<p>
+  Gli esempi hanno schede per linguaggio — PHP, TypeScript e, quando la regola è strutturale, C#,
+  Java e C++ — sempre in coppie <strong>Sbagliato</strong> e <strong>Corretto</strong>. La
+  colorazione della sintassi è generata in fase di build (Shiki, tema VS Code); il sito non invia
+  JavaScript al client.
+</p>
+
+<h2>Linguaggi coperti</h2>
+
+<p>
+  PHP, C#, Java, C++ e TypeScript condividono il vocabolario orientato agli oggetti che serve a
+  questa filosofia: classi, interfacce, eccezioni, generici (o la loro approssimazione) e un
+  gestore di pacchetti. Il tooling cambia, e il
+  <a href="/it/languages/">capitolo di riferimento</a> elenca lo strumento esatto per ogni passo
+  di verifica.
+</p>
+
+<Note label="Prima di iniziare" variant="warn">
+  <p>
+    Non applicare le quaranta regole a una base esistente in una settimana. Scegli un modulo,
+    applicale lì e lascia che il diff sia l’argomento. OTAKU si diffonde con l’esempio, non con
+    un decreto.
+  </p>
+</Note>

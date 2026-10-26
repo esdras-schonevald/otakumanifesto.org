@@ -7,6 +7,7 @@ import { neighbourRule } from '../data/rulesIndex';
 import { rules } from '../data/rules';
 import { rulesEs } from '../i18n/rules.es';
 import { rulesFr } from '../i18n/rules.fr';
+import { rulesIt } from '../i18n/rules.it';
 import { labels } from '../i18n/labels';
 import type { Locale } from '../data/ruleGroups';
 import type { RuleContent, Lang } from '../data/rulesContent1';
@@ -30,7 +31,7 @@ const toTabs = (set: Partial<Record<Lang, string>>) =>
 
 const base = locale === 'en' ? '' : `/${locale}`;
 
-const overlays: Record<string, Record<number, Record<string, string>>> = { es: rulesEs, fr: rulesFr };
+const overlays: Record<string, Record<number, Record<string, string>>> = { es: rulesEs, fr: rulesFr, it: rulesIt };
 const overlay = overlays[locale]?.[rule.id];
 const text = (field: 'title' | 'purpose' | 'concept' | 'problem' | 'solution' | 'check'): string =>
   (overlay?.[field] as string | undefined) ?? rule[field][locale] ?? rule[field].en;

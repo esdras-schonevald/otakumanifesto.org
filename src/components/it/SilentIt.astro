@@ -1,0 +1,131 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const phpPort = String.raw`namespace App\Domain\Account;
+
+interface Accounts
+{
+    public function get(AccountId $id): Account;
+
+    public function save(Account ...$accounts): void;
+}`;
+
+const tsValue = String.raw`export class Email {
+  private constructor(private readonly value: string) {}
+
+  static fromString(value: string): Email {
+    if (!value.includes('@')) {
+      throw new Error('indirizzo email non valido');
+    }
+
+    return new Email(value);
+  }
+
+  equals(other: Email): boolean {
+    return other.value === this.value;
+  }
+}`;
+---
+
+<p class="lede">
+  Il database è il dettaglio più costoso della maggior parte dei sistemi e il meno interessante.
+  Silenzio significa che il dominio può essere ragionato senza sapere quale motore, quale ORM o
+  se c’è una transazione aperta.
+</p>
+
+<h2>Un repository è una collezione</h2>
+
+<p>
+  La parola è letterale. Un repository si comporta come una collezione di aggregati in memoria: ne
+  prendi uno, ne aggiungi uno, salvi quello che hai. Niente query builder, niente frammenti SQL,
+  niente proxy di lazy loading che attraversano il confine.
+</p>
+
+<CodeTabs
+  title="Porta"
+  tabs={[{ label: 'PHP', lang: 'php', code: phpPort }]}
+/>
+
+<p>
+  La porta non ha <code>findByEmailLikedSince</code>. Gli oggetti di query esistono per i report;
+  il repository risponde al bisogno di aggregati dei casi d’uso.
+</p>
+
+<h2>Oggetti semplici</h2>
+
+<p>
+  Le entità sono POPO, POCO, POJO — l’acronimo è l’unica cosa che cambia. Uguaglianza per
+  identità, stato privato, comportamento pubblico, e l’oggetto non sa di essere persistito.
+</p>
+
+<CodeTabs
+  title="Valore immutabile"
+  tabs={[{ label: 'TypeScript', lang: 'ts', code: tsValue }]}
+/>
+
+<Note label="Regola pratica" variant="rule">
+  <p>
+    Se un file di dominio contiene un’annotazione, un attributo, una classe base o un indizio di
+    serializzazione, l’infrastruttura sta parlando. Spostalo in una classe di mapping.
+  </p>
+</Note>
+
+<h2>Il mapping appartiene al confine</h2>
+
+<p>
+  Due modelli, due lavori. Il modello di dominio protegge gli invarianti; quello di persistenza
+  protegge uno schema. Di solito partono identici e devono poter divergere — la classe di mapping
+  è il luogo dove questa divergenza ha il permesso di esistere.
+</p>
+
+<p>
+  In C# con EF Core, una classe di configurazione del <code>DbContext</code>. In Java con JPA, un
+  mapper o un’entità separata. In C++ con uno store manuale, una funzione di mapping. In PHP con
+  Doctrine, un mapping XML/YAML o attributi fuori dal namespace di dominio.
+</p>
+
+<h2>Le transazioni sono infrastruttura</h2>
+
+<p>
+  Un caso d’uso dice “salva questi due conti insieme”; se questo diventa
+  <code>BEGIN/COMMIT</code>, unit of work o saga è una decisione dell’adattatore. Se il dominio
+  chiama <code>beginTransaction()</code>, il database è diventato parte delle regole di business.
+</p>
+
+<h2>L’implementazione in memoria</h2>
+
+<p>
+  Scrivila il primo giorno. È la prova più economica che la porta è onesta e il caso d’uso è
+  libero da infrastruttura.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Linguaggio</th><th>Dettaglio di persistenza</th><th>Dove appartiene</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td>Doctrine EntityManager, PDO</td><td><code>Infrastructure/</code></td></tr>
+      <tr><td>C#</td><td>DbContext, Dapper, migrazioni EF</td><td>progetto adattatore</td></tr>
+      <tr><td>Java</td><td>JPA EntityManager, JDBC</td><td>modulo <code>infrastructure</code></td></tr>
+      <tr><td>C++</td><td>client SQL, pool di connessioni</td><td>unità di traduzione dell’adattatore</td></tr>
+      <tr><td>TypeScript</td><td>Prisma, TypeORM, driver SQL</td><td>pacchetto <code>infrastructure</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Cosa compra il silenzio</h2>
+
+<ul>
+  <li>Test unitari in millisecondi, senza container di database.</li>
+  <li>La capacità di cambiare motore senza toccare il dominio.</li>
+  <li>Errori che significano qualcosa: <code>InsufficientFunds</code>, non <code>SQLSTATE[23000]</code>.</li>
+  <li>Un dominio leggibile da chi non ha mai visto lo schema.</li>
+</ul>
+
+<Note label="Obiezione comune" variant="warn">
+  <p>
+    “Due modelli sono duplicazione.” È duplicazione nello stesso senso in cui la cintura di
+    sicurezza è attrito. Nel momento in cui lo schema ha bisogno di una colonna che il dominio non
+    dovrebbe conoscere, la duplicazione si ripaga.
+  </p>
+</Note>
