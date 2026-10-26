@@ -1,0 +1,161 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const openapi = String.raw`openapi: 3.1.0
+info:
+  title: Accounts
+  version: 1.4.0
+paths:
+  /accounts/{id}/withdrawals:
+    post:
+      operationId: withdraw
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, currency]
+              properties:
+                amount: { type: integer, minimum: 1 }
+                currency: { type: string, enum: [BRL, USD] }
+      responses:
+        "201":
+          description: 出金を受け付けました
+        "409":
+          description: 残高不足`;
+
+const phpContract = String.raw`namespace App\Domain\Account;
+
+final class Withdrawal
+{
+    private function __construct(
+        private AccountId $account,
+        private Money $amount,
+    ) {}
+
+    public static function fromRequest(AccountId $account, Money $amount): self
+    {
+        if ($amount->isNegative()) {
+            throw new InvalidWithdrawalAmount($amount);
+        }
+
+        return new self($account, $amount);
+    }
+}`;
+---
+
+<p class="lede">
+  二つのシステムはクラスではなく契約で統合します。契約は気軽に変えられない部分であり、その中の
+  言語は業務の専門家が認識できなければならない部分です。
+</p>
+
+<h2>ユビキタス言語</h2>
+
+<p>
+  専門家が「決済確定」と言うなら、コードは <code>PaymentResult</code> とは書きません。名前は
+  見た目の問題ではありません。誤った名前は誰かの頭の中に翻訳層を強制し、そこから要件が
+  失われます。
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>業務の言葉</th><th>コードの言葉</th><th>なぜ痛いか</th></tr></thead>
+    <tbody>
+      <tr><td>決済確定</td><td><code>PaymentResult</code></td><td>一つの概念に二つの名前。レポートとコードが食い違う</td></tr>
+      <tr><td>チャージバック</td><td><code>refund</code></td><td>異なるライフサイクルが一つの型に混ざる</td></tr>
+      <tr><td>名義人</td><td><code>user</code></td><td>「User」が技術的な主体を金融ルールに漏らす</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  テストは機械的です。ユースケースを専門家に音読してください。言葉を直すために遮られたら、
+  コードが間違っています。
+</p>
+
+<h2>設計が先</h2>
+
+<p>
+  契約は実装より先に書きます。二つのチームが安く言い争える成果物であり、書き直しを生き延びる
+  ものです。
+</p>
+
+<CodeTabs
+  title="OpenAPI 3.1 — 約束"
+  tabs={[{ label: 'openapi.yaml', lang: 'yaml', code: openapi }]}
+/>
+
+<p>
+  契約が<strong>持たない</strong>ものに注目してください。クラス名、データベースの列、
+  フレームワークの注釈はありません。リソース、動詞、失敗の型を記述し、業務と同じ語彙を使います。
+</p>
+
+<h2>コードの中の契約</h2>
+
+<CodeTabs
+  title="検証は概念に属する"
+  tabs={[{ label: 'PHP', lang: 'php', code: phpContract }]}
+/>
+
+<p>
+  リクエストオブジェクトは DTO の袋ではありません。有効な出金を表す最小の型であり、
+  「金額は正でなければならない」が住める唯一の場所です。
+</p>
+
+<h2>互換性の規則</h2>
+
+<ul>
+  <li><strong>追加のみ。</strong> 新しい任意フィールドと新しいエンドポイントは安全です。改名と削除は壊します。</li>
+  <li><strong>フィールド名を再利用しない。</strong> 別の意味での再利用は静かな破壊的変更です。</li>
+  <li><strong>クラスではなく契約に版を付ける。</strong> 内部の名前空間ではなく API に意味的バージョン。</li>
+  <li><strong>削除する前に非推奨にする。</strong> 告知し、レスポンスで警告し、それから削除します。</li>
+  <li><strong>エラーの形も契約の一部。</strong> 文書化されていない本文を持つ <code>409</code> は破られた約束です。</li>
+</ul>
+
+<h2>実装ではなく約束をテストする</h2>
+
+<p>
+  契約テストは、実装が今も文書を守っていることを検証します。レスポンスのスキーマ検証、
+  コンシューマ駆動テスト（Pact）、そして公開した spec を前の版と比較し、壊す変更で失敗する
+  CI の手順です。
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>言語</th><th>契約の道具</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td>OpenAPI バリデータ、<code>league/openapi-psr7-validator</code>、Pact PHP</td></tr>
+      <tr><td>C#</td><td>NSwag、Microsoft.OpenApi、Pact .NET</td></tr>
+      <tr><td>Java</td><td>springdoc-openapi、Pact JVM</td></tr>
+      <tr><td>C++</td><td>結合テストでの spec 検証、バインディング経由の Pact</td></tr>
+      <tr><td>TypeScript</td><td>spec からの zod/valibot、Pact JS</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<Note label="ルール" variant="rule">
+  <p>
+    コードが業務の専門家の言葉で読めないなら、あるいは契約が迂回されているなら、システムは
+    壊れています。
+  </p>
+</Note>
+
+<h2>迂回は既定の失敗</h2>
+
+<p>
+  契約は悪い設計で壊れるより、便宜で迂回されます。他のサービスのデータベースを読むサービス、
+  内部エンドポイントに触れるクライアント、本番に直接作られた「一時的な」フィールド。迂回は
+  どれも第二の真実の源で、二つの真実は長く同じではいられません。
+</p>
+
+<p>
+  対策は技術より先に社会的です。契約が唯一の扉でなければならず、扉は壁より安くなければ
+  なりません。
+</p>

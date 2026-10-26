@@ -1,0 +1,99 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  この哲学は、それを生んだプロジェクトの枠を越えました。このサイトが今の住まいです — 言語・
+  パッケージマネージャ・ベンダーから独立しています。
+</p>
+
+<h2>なぜ別の家なのか</h2>
+
+<p>
+  OTAKU は <a href="https://phprise.org">PHPRise</a> の中で生まれました。PHP は最初の実装が
+  たまたま選んだ言語であり、思想の性質ではありません。ルールが扱うのはインデント、コレクション、
+  依存の向き、契約であり、これらはあらゆるオブジェクト指向言語が表現できます。
+</p>
+
+<p>
+  PHP の組織の中にマニフェストを置くことは、二つの誤りを同時に犯していました。哲学が PHP を
+  要求するかのように見えたこと、そして PHP のリポジトリが自分たちについてではない文書の写しを
+  抱えたことです。PHPRise は今、複製せずにここを指しています。
+</p>
+
+<h2>著者</h2>
+
+<p>
+  著者・保守は <a href="https://esdras.me">Esdras Schönevald</a>。Lead Software Engineer であり、
+  PHPRise のメンテナーです。この哲学は、決済・アイデンティティ・医療のシステムを二十年にわたり
+  作ってきた経験から来ています。そして「ソフトウェアで高くつくのは書いたコードではなく、保ち続ける
+  構造である」という繰り返しの実感から来ています。
+</p>
+
+<p>
+  思想的負債は<a href="https://esdras.me/#inspirations">個人サイト</a>に並んでいます。Object
+  Calisthenics（Jeff Bay）、Clean Architecture（Robert C. Martin）、DDD（Eric Evans）、Unix 哲学、
+  Conway、Parnas、Dijkstra です。
+</p>
+
+<h2>ライセンス</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>部分</th><th>ライセンス</th><th>できること</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>マニフェストとガイドの本文</td>
+        <td><a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></td>
+        <td>出典表示と同じライセンスのもとで共有・改変</td>
+      </tr>
+      <tr>
+        <td>コード例</td>
+        <td>MIT</td>
+        <td>ソース内の出典表示のもとで利用・改変・販売</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  出典表示は <code>https://otakumanifesto.org</code> へのリンクと著者名で十分です。
+</p>
+
+<h2>貢献</h2>
+
+<p>
+  ソースは
+  <a href="https://github.com/esdras-schonevald/otakumanifesto.org">github.com/esdras-schonevald/otakumanifesto.org</a>
+  に公開されています。サイトは Astro の静的ビルドで、ランタイムもデータベースもありません。
+</p>
+
+<ul>
+  <li><strong>修正</strong>（誤字、壊れたリンク、誤ったコード）— issue か PR を直接どうぞ。</li>
+  <li><strong>別言語の例</strong> — ルールが変わらない限り歓迎します。</li>
+  <li><strong>ルールの変更</strong> — まず issue を開いてください。ルールは意図的に変えにくくしてあります。それが要点です。</li>
+</ul>
+
+<h2>バージョン</h2>
+
+<p>
+  哲学は意味的バージョンではなく日付で版を持ちます。ルールが黙って編集されることはありません。
+  変更は告知され、議論され、何が変わったかの例とともにガイドへ反映されます。
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>版</th><th>変更</th></tr></thead>
+    <tbody>
+      <tr><td>2026.10</td><td>第二版: 40の測定可能なルール、主要指標としての循環的複雑度、TypeScript、翻訳。</td></tr>
+      <tr><td>2026.10</td><td>PHPRise の外での最初の公開版: 5つの柱、3つの形、多言語ガイド。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<Note label="熱意について">
+  <p>
+    人格テストになった哲学は失敗です。ルールはコードについてのもので、コードは変えられます。
+    ルールと議論してください。人と議論しないでください。
+  </p>
+</Note>

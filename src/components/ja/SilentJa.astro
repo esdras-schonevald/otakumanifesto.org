@@ -1,0 +1,130 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const phpPort = String.raw`namespace App\Domain\Account;
+
+interface Accounts
+{
+    public function get(AccountId $id): Account;
+
+    public function save(Account ...$accounts): void;
+}`;
+
+const tsValue = String.raw`export class Email {
+  private constructor(private readonly value: string) {}
+
+  static fromString(value: string): Email {
+    if (!value.includes('@')) {
+      throw new Error('メールアドレスが不正です');
+    }
+
+    return new Email(value);
+  }
+
+  equals(other: Email): boolean {
+    return other.value === this.value;
+  }
+}`;
+---
+
+<p class="lede">
+  データベースは多くのシステムで最も高くつく詳細であり、最も面白くない詳細です。静けさとは、
+  どのエンジンか、どの ORM か、トランザクションが開いているかを知らずにドメインを考えられる
+  ことです。
+</p>
+
+<h2>リポジトリはコレクション</h2>
+
+<p>
+  言葉は文字通りです。リポジトリはメモリ上の集約のコレクションのように振る舞います。一つ取り、
+  一つ加え、持っているものを保存します。クエリビルダも、SQL の断片も、境界を越える遅延読み込みの
+  プロキシもありません。
+</p>
+
+<CodeTabs
+  title="ポート"
+  tabs={[{ label: 'PHP', lang: 'php', code: phpPort }]}
+/>
+
+<p>
+  ポートに <code>findByEmailLikedSince</code> はありません。レポートにはクエリオブジェクトが
+  あり、リポジトリはユースケースの集約の必要に応えます。
+</p>
+
+<h2>素のオブジェクト</h2>
+
+<p>
+  エンティティは POPO、POCO、POJO です。変わるのは頭字語だけ。同一性による等価、private な状態、
+  公開された振る舞い、そして自分が永続化されることを知りません。
+</p>
+
+<CodeTabs
+  title="不変の値"
+  tabs={[{ label: 'TypeScript', lang: 'ts', code: tsValue }]}
+/>
+
+<Note label="実務の指針" variant="rule">
+  <p>
+    ドメインのファイルに注釈、属性、基底クラス、シリアライズのヒントがあれば、インフラが話して
+    います。マッピングのクラスへ移してください。
+  </p>
+</Note>
+
+<h2>マッピングは境界に属する</h2>
+
+<p>
+  二つのモデル、二つの仕事。ドメインモデルは不変条件を守り、永続化モデルはスキーマを守ります。
+  最初は同じでも、分岐できる必要があります — マッピングのクラスが、その分岐を許す場所です。
+</p>
+
+<p>
+  C# の EF Core なら <code>DbContext</code> の設定クラス。Java の JPA ならマッパーか別の
+  エンティティ。C++ で手書きのストアならマッピング関数。PHP の Doctrine なら XML/YAML の
+  マッピング、またはドメインの名前空間の外の属性です。
+</p>
+
+<h2>トランザクションはインフラ</h2>
+
+<p>
+  ユースケースは「この二つの口座を一緒に保存する」と言います。それが
+  <code>BEGIN/COMMIT</code> になるか、unit of work になるか、saga になるかはアダプタの決定です。
+  ドメインが <code>beginTransaction()</code> を呼ぶなら、データベースが業務ルールの一部に
+  なっています。
+</p>
+
+<h2>インメモリ実装</h2>
+
+<p>
+  初日に書いてください。ポートが正直で、ユースケースがインフラから自由であることの、最も安い
+  証明です。
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>言語</th><th>永続化の詳細</th><th>属する場所</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td>Doctrine EntityManager、PDO</td><td><code>Infrastructure/</code></td></tr>
+      <tr><td>C#</td><td>DbContext、Dapper、EF マイグレーション</td><td>アダプタのプロジェクト</td></tr>
+      <tr><td>Java</td><td>JPA EntityManager、JDBC</td><td><code>infrastructure</code> モジュール</td></tr>
+      <tr><td>C++</td><td>SQL クライアント、接続プール</td><td>アダプタの翻訳単位</td></tr>
+      <tr><td>TypeScript</td><td>Prisma、TypeORM、SQL ドライバ</td><td><code>infrastructure</code> パッケージ</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>静けさが買うもの</h2>
+
+<ul>
+  <li>データベースのコンテナなしで、ミリ秒で動く単体テスト。</li>
+  <li>ドメインに触れずにエンジンを替えられること。</li>
+  <li>意味のあるエラー。<code>SQLSTATE[23000]</code> ではなく <code>InsufficientFunds</code>。</li>
+  <li>スキーマを見たことのない人にも読めるドメイン。</li>
+</ul>
+
+<Note label="よくある反論" variant="warn">
+  <p>
+    「二つのモデルは重複だ」。それはシートベルトが摩擦だと言うのと同じ意味の重複です。
+    スキーマがドメインの知るべきでない列を必要とした瞬間に、重複は元を取ります。
+  </p>
+</Note>

@@ -1,0 +1,147 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  モジュール性は事後にレビューするものではなく、リポジトリの形で強制します。すべてのリポジトリは
+  三つの原型のちょうど一つに収まらなければなりません。第四の選択肢も、混成もありません。
+</p>
+
+<h2>1 — アトム</h2>
+
+<p>
+  可能な最小の粒度です。さらに分割できるなら、それはアトムではありません。
+</p>
+
+<ul>
+  <li><strong>構造:</strong> フラット。ソースのルート直下に一階層だけ。</li>
+  <li><strong>ルール:</strong> 下位分割なし。一つの契約を満たします。</li>
+  <li><strong>テスト:</strong> 「そして」なしの一文で説明できますか。</li>
+  <li><strong>例:</strong> 値オブジェクト、文字列ユーティリティ、単一の HTTP クライアント。</li>
+</ul>
+
+<h2>2 — アセンブリ</h2>
+
+<p>
+  接続点です。アセンブリは論理を持たず、一度の依存宣言で十のパッケージが入るようにアトムの
+  結合を編成します。
+</p>
+
+<ul>
+  <li><strong>構造:</strong> ソースコードなし。構成はパッケージのマニフェストで宣言します。</li>
+  <li><strong>ルール:</strong> 振る舞いがあれば、それはアセンブリではありません。</li>
+  <li><strong>テスト:</strong> マニフェストを消すと README だけが残りますか。</li>
+  <li><strong>例:</strong> HTTP のアトムをまとめるメタパッケージ、commons バンドル。</li>
+</ul>
+
+<h2>3 — アプリケーション</h2>
+
+<p>
+  生きたシステムです。ライブラリではなく、ビジネスの中核の実装であり、Clean Architecture と
+  DDD に従います。
+</p>
+
+<ul>
+  <li><strong>構造:</strong> ドメイン、アプリケーション、インフラ、インターフェース — 依存は内側へ。</li>
+  <li><strong>ルール:</strong> 薄く保つ。汎用の道具はすべてアトムへ降ろします。</li>
+  <li><strong>テスト:</strong> 業務の専門家が認識するユースケースを含みますか。</li>
+  <li><strong>例:</strong> 決済ゲートウェイ、アイデンティティサービス。</li>
+</ul>
+
+<h2>四つのエコシステムで同じ考え</h2>
+
+<p>成果物の名前は変わりますが、形は変わりません。</p>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>形</th><th>PHP / Composer</th><th>C# / NuGet</th><th>Java / Maven</th><th>C++ / Conan</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>アトム</strong></td>
+        <td><code>type: library</code>、単一名前空間</td>
+        <td>class library、単一名前空間</td>
+        <td>jar、単一パッケージ</td>
+        <td>header + library、単一名前空間</td>
+      </tr>
+      <tr>
+        <td><strong>アセンブリ</strong></td>
+        <td><code>type: metapackage</code>、<code>require</code> のみ</td>
+        <td>コードなし、<code>PackageReference</code> のみ</td>
+        <td><code>&lt;dependency&gt;</code> のみの pom</td>
+        <td><code>requires</code> だけの conanfile</td>
+      </tr>
+      <tr>
+        <td><strong>アプリケーション</strong></td>
+        <td><code>type: project</code>、<code>src/Domain</code>…</td>
+        <td>層を持つ実行プロジェクト</td>
+        <td>層モジュールを持つアプリ</td>
+        <td>層を持つ実行ターゲット</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>リポジトリの分類</h2>
+
+<p>三つの問いを順に立て、最初の「はい」で止めます。</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>問い</th><th>はいなら</th></tr></thead>
+    <tbody>
+      <tr><td>ユースケースと業務ルールを含むか</td><td>アプリケーション</td></tr>
+      <tr><td>依存の宣言だけを含むか</td><td>アセンブリ</td></tr>
+      <tr><td>一つの責務として一文で説明できるか</td><td>アトム</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  どれも「はい」でなければ、そのリポジトリはまだ存在する準備ができていません。美的な判断ではなく、
+  境界がまだ見つかっていないという信号です。
+</p>
+
+<h2>なぜ三つで、それ以上ではないか</h2>
+
+<p>
+  形が増えるほど、隠れる場所が増えます。「共有ユーティリティ」「common」「core」という第四の
+  原型は、必ず無関係なものが溜まる場所になり、最後には誰も何も削除できなくなります。
+</p>
+
+<p>
+  三つの形は漏れに対する機械的なルールも与えます。アトムに属するコードがアプリケーションに
+  住むと、やがて別のアプリケーションへコピーされます。レビュー担当は一つの問いだけを立てれば
+  よいので、分類はその漏れを可視化します — <em>このファイルはこの形に属するか。</em>
+</p>
+
+<Note label="アンチパターン" variant="warn">
+  <p>
+    <code>utils</code>、<code>shared</code>、<code>core</code> という名前で責務が複数ある
+    リポジトリ。論理があるのでアセンブリではなく、複数のことをするのでアトムでもありません。
+    OTAKU が取り除く形です。
+  </p>
+</Note>
+
+<h2>強制</h2>
+
+<p>
+  文書の中に住む分類は提案にすぎません。強制するには、形を機械可読なメタデータに置き、CI で
+  検証します。
+</p>
+
+<ul>
+  <li><strong>PHP:</strong> <code>composer.json</code> の <code>type</code> は <code>library</code>、<code>metapackage</code>、<code>project</code> のいずれか。</li>
+  <li><strong>C#:</strong> アセンブリに <code>.cs</code> ファイルを置かない。</li>
+  <li><strong>Java:</strong> アセンブリモジュールの <code>src/main/java</code> は空。</li>
+  <li><strong>C++:</strong> アセンブリはヘッダのみか存在しない。<code>conanfile</code> は <code>requires</code> だけ。</li>
+</ul>
+
+<p>
+  アプリケーション形の検証は構造的です。ドメイン層がインフラ・フレームワーク・データベースを
+  import していないことを確認します。各エコシステムに道具があります — <code>deptrac</code>（PHP）、
+  <code>NetArchTest</code>（C#）、<code>ArchUnit</code>（Java）、CMake のターゲット規則（C++）。
+</p>
+
+<p><a href="/ja/guide/">ガイドへ進む →</a></p>

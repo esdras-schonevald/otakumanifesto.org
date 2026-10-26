@@ -1,0 +1,61 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  マニフェストは何が必須かを述べます。このガイドはそれがコードでどう見えるかを示します —
+  一度に一つのルール、まず違反から。人は正しい例より、間違った例の中に自分のコードを早く見つけるからです。
+</p>
+
+<h2>方法</h2>
+
+<ol>
+  <li><strong>ルールを読む。</strong> 一文であり、交渉できません。</li>
+  <li><strong>違反を見つける。</strong> それを壊す最小の例を見ます。</li>
+  <li><strong>最小の修正を当てる。</strong> 再設計ではなく、ルールを満たす最小の変更です。</li>
+  <li><strong>後戻りを不可能にする。</strong> linter、アーキテクチャテスト、レビュー用チェックリスト。</li>
+</ol>
+
+<p>
+  どのレッスンも検証の手順で終わります。文書にしか住まないルールは好みです。ビルドを壊すルールが
+  制約です。
+</p>
+
+<h2>トラック</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>トラック</th><th>柱</th><th>学ぶこと</th></tr></thead>
+    <tbody>
+      <tr><td><a href="/ja/guide/rules/">規律</a></td><td>O</td><td>40の測定可能なルール。目的・概念・問題・解決。</td></tr>
+      <tr><td><a href="/ja/guide/composition/">構成</a></td><td>T</td><td>小さな部品、明示的な入出力、データパイプとしてのアプリケーション。</td></tr>
+      <tr><td><a href="/ja/guide/protect-the-core/">装甲</a></td><td>A</td><td>依存の向き、ポートとアダプタ、アーキテクチャテスト。</td></tr>
+      <tr><td><a href="/ja/guide/silent-infrastructure/">静けさ</a></td><td>K</td><td>リポジトリ、素のオブジェクト、データベースを詳細にすること。</td></tr>
+      <tr><td><a href="/ja/guide/contracts/">契約</a></td><td>U</td><td>ユビキタス言語、設計先行、契約が本当に約束するもの。</td></tr>
+      <tr><td><a href="/ja/guide/checklist/">監査</a></td><td>—</td><td>実在のリポジトリに一時間で当てるレビュー用チェックリスト。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>コード例について</h2>
+
+<p>
+  例には言語タブがあります — PHP、TypeScript、そしてルールが構造的なら C#、Java、C++。
+  常に <strong>誤り</strong> と <strong>正しい</strong> の対で示します。シンタックスハイライトは
+  ビルド時に生成し（Shiki、VS Code のテーマ）、サイトはクライアント JavaScript を送りません。
+</p>
+
+<h2>対象言語</h2>
+
+<p>
+  PHP、C#、Java、C++、TypeScript は、この哲学が必要とするオブジェクト指向の語彙を共有します。
+  クラス、インターフェース、例外、ジェネリクス（またはその近似）、パッケージマネージャです。
+  道具は異なり、<a href="/ja/languages/">リファレンス章</a>が検証手順ごとの正確な道具を並べています。
+</p>
+
+<Note label="始める前に" variant="warn">
+  <p>
+    既存のコードベースに一週間で40のルールを当てないでください。一つのモジュールを選び、そこで
+    適用し、差分を議論の材料にします。OTAKU は布告ではなく例で広がります。
+  </p>
+</Note>

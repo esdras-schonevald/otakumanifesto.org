@@ -1,0 +1,154 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  哲学は言語に中立ですが、語彙は中立ではありません。エコシステムごとに値オブジェクトの呼び名、
+  コレクションの表し方、依存が内側を向くことを証明する道具が違います。
+</p>
+
+<h2>同じ概念、五つの語彙</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>概念</th><th>PHP</th><th>C#</th><th>Java</th><th>C++</th><th>TypeScript</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>値オブジェクト</td>
+        <td><code>final class</code> ＋ private コンストラクタ</td>
+        <td><code>record</code> または <code>sealed class</code></td>
+        <td><code>record</code></td>
+        <td><code>class</code> ＋ <code>operator==</code></td>
+        <td><code>class</code> ＋ private コンストラクタ</td>
+      </tr>
+      <tr>
+        <td>第一級コレクション</td>
+        <td><code>array</code> を包むクラス</td>
+        <td><code>IReadOnlyList&lt;T&gt;</code> を包むクラス</td>
+        <td><code>List&lt;T&gt;</code> を包むクラス</td>
+        <td><code>std::vector&lt;T&gt;</code> を包むクラス</td>
+        <td><code>readonly T[]</code> を包むクラス</td>
+      </tr>
+      <tr>
+        <td>契約</td>
+        <td><code>interface</code></td>
+        <td><code>interface</code></td>
+        <td><code>interface</code></td>
+        <td>抽象クラス、純粋仮想関数</td>
+        <td><code>interface</code></td>
+      </tr>
+      <tr>
+        <td>ドメインの失敗</td>
+        <td><code>DomainException</code> を継承した例外</td>
+        <td>例外または <code>Result&lt;T&gt;</code></td>
+        <td>unchecked 例外</td>
+        <td>例外または <code>std::expected</code></td>
+        <td>例外または <code>Result&lt;T&gt;</code> の共用体</td>
+      </tr>
+      <tr>
+        <td>パッケージ境界</td>
+        <td>Composer パッケージ</td>
+        <td>NuGet パッケージ／プロジェクト</td>
+        <td>Maven モジュール</td>
+        <td>CMake ターゲット／Conan パッケージ</td>
+        <td>npm ワークスペース（npm/pnpm）</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>PHP</h2>
+
+<p>
+  参照実装であり、OTAKU が最初に適用された言語です。注釈の代わりに属性を使い、
+  <code>declare(strict_types=1)</code> は必須で、クラスは PHP タグを閉じません。
+</p>
+
+<ul>
+  <li><strong>値オブジェクト:</strong> <code>final class</code>、private コンストラクタ、名前付きコンストラクタ。</li>
+  <li><strong>コレクション:</strong> 配列フィールドと振る舞いを持つクラス。シグネチャに生の <code>array</code> を出さない。</li>
+  <li><strong>ポート:</strong> ドメインの名前空間のインターフェース。アダプタは <code>Infrastructure</code>。</li>
+  <li><strong>道具:</strong> PHP_CodeSniffer、PHPStan/Psalm、deptrac、PHPUnit、Infection。</li>
+</ul>
+
+<h2>C#</h2>
+
+<p>
+  C# は <code>record</code>、<code>init</code>、<code>required</code> を提供するので、値オブジェクトは
+  ほとんど無料です。危険は PHP の逆で、すべてを record にして振る舞いを失いがちです。
+</p>
+
+<ul>
+  <li><strong>値オブジェクト:</strong> 検証するコンストラクタを持つ <code>sealed record</code>、または <code>IEquatable&lt;T&gt;</code> を持つ <code>sealed class</code>。</li>
+  <li><strong>コレクション:</strong> <code>IReadOnlyList&lt;T&gt;</code> を包み、<code>IEnumerable</code> ではなく振る舞いを公開する。</li>
+  <li><strong>ポート:</strong> ドメインプロジェクトのインターフェース。アダプタは戻り参照のないインフラプロジェクト。</li>
+  <li><strong>道具:</strong> Roslyn アナライザ、StyleCop、NetArchTest、<code>dotnet test</code>。</li>
+</ul>
+
+<h2>Java</h2>
+
+<p>
+  <code>record</code> が値オブジェクトを覆います。難しいのはモジュール境界で、Maven の既定は
+  すべてがすべてを見る単一クラスパスです。
+</p>
+
+<ul>
+  <li><strong>値オブジェクト:</strong> 検証するコンパクトコンストラクタを持つ <code>record</code>。</li>
+  <li><strong>コレクション:</strong> <code>List&lt;T&gt;</code> を包み、内部リストを決して返さない。</li>
+  <li><strong>ポート:</strong> ドメインパッケージのインターフェース。ArchUnit がドメインからのインフラ import を禁じる。</li>
+  <li><strong>道具:</strong> Checkstyle、PMD、ArchUnit、<code>jdeps</code>、JUnit 5。</li>
+</ul>
+
+<h2>C++</h2>
+
+<p>
+  コストについて最も正直で、所有について最も厳しい言語です。リフレクションも隠れるフレームワークも
+  ありません — そのため OTAKU は適用しやすく、偽装しにくくなります。
+</p>
+
+<ul>
+  <li><strong>値オブジェクト:</strong> private な状態と既定の <code>operator==</code> を持つクラス。値か <code>const&amp;</code> で渡す。</li>
+  <li><strong>コレクション:</strong> <code>std::vector&lt;T&gt;</code> を包み、不変条件が生き残る場合だけイテレータを公開する。</li>
+  <li><strong>ポート:</strong> 純粋仮想関数と仮想デストラクタを持つ抽象クラス。ヘッダに実装を置かない。</li>
+  <li><strong>道具:</strong> clang-tidy、include-what-you-use、CMake のターゲット可視性、sanitizer、<code>std::expected</code>。</li>
+</ul>
+
+<h2>TypeScript</h2>
+
+<p>
+  TypeScript が五番目の言語である理由は実務的です。今日オブジェクト指向のコードが最も書かれる場所で
+  あり、クラス、インターフェース、ジェネリクス、例外、パッケージマネージャという、哲学が必要とする
+  ものをすべて備えています。二つのルールは破りやすいので注意が要ります。
+</p>
+
+<ul>
+  <li><strong>値オブジェクト:</strong> private コンストラクタと静的ファクトリ。<code>readonly</code> だけでは検証できない。</li>
+  <li><strong>コレクション:</strong> <code>readonly T[]</code> を包み、内部配列を決して返さない。</li>
+  <li><strong>契約:</strong> ポートには <code>interface</code>。ドメインのシグネチャにインフラの型を入れない。</li>
+  <li><strong>罠 — 構造的型付け:</strong> 同じ形なら交換可能です。同一性が重要なときはブランド（<code>declare const brand: unique symbol</code>）を使います。</li>
+  <li><strong>罠 — <code>any</code>:</strong> 局所的な <code>mixed</code> です。ルール38が適用され、明示的なシリアライズ境界でのみ許されます。</li>
+  <li><strong>道具:</strong> ESLint <code>complexity</code> と <code>max-lines-per-function</code>、<code>tsc --strict</code>、<code>ts-arch</code>、Vitest。</li>
+</ul>
+
+<Note label="推奨">
+  <p>
+    <strong>Kotlin</strong> と <strong>Swift</strong> はそれぞれ Java と C++ の指針を
+    引き継ぎます。ルールは同じで、句読点が違うだけです。まだ独立した章は要りません。
+  </p>
+</Note>
+
+<h2>翻訳できないもの</h2>
+
+<ul>
+  <li><strong>注釈・属性</strong>は C++ に対応物がありません。他の三言語ではインフラであり、ドメインの外に属します。</li>
+  <li><strong>ガベージコレクションと所有権</strong>は集約の複製方法を変えますが、設計は変えません。</li>
+  <li><strong>例外と結果型</strong>は失敗のシグネチャを変えますが、「失敗は明示的でなければならない」という規則は変えません。</li>
+  <li><strong>パッケージマネージャ</strong>はアセンブリの宣言方法が違うだけで、「論理なし、依存だけ」という概念は同じです。</li>
+</ul>
+
+<p>
+  あなたの言語がクラス、インターフェース、パッケージを表現できるなら、この哲学は適用できます。
+  できなければ、そう言ってください — そして装わないでください。
+</p>

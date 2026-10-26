@@ -8,7 +8,7 @@ interface RulesPageCopy {
   outro: string;
 }
 
-export const rulesPage: Record<'pt-br' | 'es' | 'fr' | 'it', RulesPageCopy> = {
+export const rulesPage: Record<'pt-br' | 'es' | 'fr' | 'it' | 'ja', RulesPageCopy> = {
   'pt-br': {
     title: 'As quarenta regras',
     kicker: 'Trilha O — Domine sua Disciplina',
@@ -47,9 +47,20 @@ export const rulesPage: Record<'pt-br' | 'es' | 'fr' | 'it', RulesPageCopy> = {
     outro:
       'In caso di dubbio, scegli l’opzione più restrittiva. È il criterio di spareggio che la filosofia prescrive.',
   },
+
+  ja: {
+    title: '40のルール',
+    kicker: 'トラック O — 規律を自ら律する',
+    lede: '40のルール、それぞれに閾値があります。機械的である理由は単純です。好みに依存するルールは、レビューも自動化も議論もできないからです。',
+    intro:
+      '<strong>メソッドあたりの循環的複雑度 ≤ 5</strong> が主要指標です。読み手が同時に保持しなければならない独立した経路の数であり、分岐・ループ・論理演算子が一つずつ増やします。規律の残りはこの数を低く保つためのものです。各ルールには目的・概念・問題・解決を示す専用のページがあります。',
+    outro:
+      '迷ったら、より制限の強い選択をしてください。それがこの哲学の定める判断基準です。',
+  },
 };
 
 export function rulesPageFor(locale: Locale): RulesPageCopy {
+  if (locale === 'ja') return rulesPage.ja;
   if (locale === 'it') return rulesPage.it;
   if (locale === 'fr') return rulesPage.fr;
   return locale === 'es' ? rulesPage.es : rulesPage['pt-br'];

@@ -1,0 +1,132 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const phpPipe = String.raw`final class TransferMoney
+{
+    public function __construct(
+        private Accounts $accounts,
+        private Ledger $ledger,
+    ) {}
+
+    public function __invoke(Transfer $transfer): Receipt
+    {
+        $source = $this->accounts->get($transfer->source());
+        $target = $this->accounts->get($transfer->target());
+
+        $debited = $source->debit($transfer->amount());
+        $credited = $target->credit($transfer->amount());
+
+        $this->accounts->save($debited, $credited);
+
+        return $this->ledger->record($transfer);
+    }
+}`;
+
+const tsPipe = String.raw`class TransferMoney {
+  constructor(
+    private readonly accounts: Accounts,
+    private readonly ledger: Ledger,
+  ) {}
+
+  run(transfer: Transfer): Receipt {
+    const source = this.accounts.get(transfer.source);
+    const target = this.accounts.get(transfer.target);
+
+    this.accounts.save(
+      source.debit(transfer.amount),
+      target.credit(transfer.amount),
+    );
+
+    return this.ledger.record(transfer);
+  }
+}`;
+---
+
+<p class="lede">
+  Unix の道具は一つのことをし、stdin と stdout で話します。ここでの部品は一つのことをし、
+  契約で話します。それ以外 — どう呼ばれるか、どこで動くか、誰が所有するか — は設定です。
+</p>
+
+<h2>一つの部品、一つの仕事</h2>
+
+<p>
+  テストは「小さいか」ではなく「<em>そして</em>なしで説明できるか」です。振込を検証し
+  <em>そして</em> 永続化するクラスには、変更理由が二つ、テストすべき失敗の型が二つあります。
+  <em>そして</em> の位置で切ります。
+</p>
+
+<h2>データパイプ</h2>
+
+<p>
+  入力はアダプタ（HTTP コントローラ、CLI コマンド、キューの消費者）から届き、素のデータとして
+  中核を通り、別のアダプタから出ます。中核はどのアダプタが呼んだかを知りません。
+</p>
+
+<CodeTabs
+  title="ユースケースはポートを受け取り、フレームワークは受け取らない"
+  tabs={[
+    { label: 'PHP', lang: 'php', code: phpPipe },
+    { label: 'TypeScript', lang: 'ts', code: tsPipe },
+  ]}
+/>
+
+<p>
+  このクラスが import していないものに注目してください。HTTP も ORM もコンテナもありません。
+  業務の名前を持つ二つのポートだけを知っています。これがパイプです。
+</p>
+
+<h2>合成は境界で行う</h2>
+
+<p>
+  どの実装が本物かを誰かが決めなければなりません。その決定は合成ルートに属します — 一箇所、
+  通常はエントリポイントで、インフラを中核に配線します。
+</p>
+
+<Note label="匂い" variant="warn">
+  <p>
+    ドメインのクラスがコンテナに依存を求めたら、合成が内側へ漏れています。ユースケース内の
+    <code>$container-&gt;get(...)</code> は隠れた引数であり、テストできない継ぎ目です。
+  </p>
+</Note>
+
+<h2>部品は小ささではなく、差し替え可能であること</h2>
+
+<ol>
+  <li><strong>契約</strong>があり、振る舞いをドメインの言葉で記述している。</li>
+  <li><strong>実装の型が漏れていない</strong>（シグネチャに <code>QueryBuilder</code> を出さない）。</li>
+  <li><strong>役割ごとに実装が一つ</strong>本番に、そしてインメモリの実装がテストに。</li>
+</ol>
+
+<p>
+  インメモリ実装は、あなたが書く最も安いアーキテクチャテストです。ユースケースがフェイクに
+  対して動かないなら、それは合成されておらず、フレームワークに溶接されています。
+</p>
+
+<h2>循環は失敗の信号</h2>
+
+<p>
+  合成は依存を見えるようにします。グラフに循環があれば、二つの部品は実は一つか、責務が
+  間違った場所にあります。グラフを描く道具 — <code>deptrac</code>、<code>ArchUnit</code>、
+  <code>jdeps</code>、<code>include-what-you-use</code> — がその信号をビルド失敗に変えます。
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>言語</th><th>合成の仕組み</th><th>グラフの検証</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td>コンストラクタ注入、境界の PSR-11 コンテナ</td><td>deptrac</td></tr>
+      <tr><td>C#</td><td>コンストラクタ注入、<code>IServiceCollection</code></td><td>NetArchTest</td></tr>
+      <tr><td>Java</td><td>コンストラクタ注入、手動配線または CDI</td><td>ArchUnit、<code>jdeps</code></td></tr>
+      <tr><td>C++</td><td>コンストラクタの参照・ポインタ、<code>main</code> で配線</td><td>ビルドグラフ、IWYU</td></tr>
+      <tr><td>TypeScript</td><td>コンストラクタ注入、エントリポイントで配線</td><td>ts-arch</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>合成ではないもの</h2>
+
+<p>
+  「すべてにインターフェースを抽出する」ことではありません。実装が一つでテスト用フェイクも
+  ないインターフェースは儀式です。合成は二つ目の実装 — 本物かインメモリ — によって正当化されます。
+</p>

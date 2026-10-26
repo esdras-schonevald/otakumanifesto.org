@@ -1,0 +1,127 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  検証できない哲学は飾りです。これは実在のリポジトリに対して私が行う監査です — 一時間、
+  何も書き換えず、証拠だけを集めます。
+</p>
+
+<h2>始める前に</h2>
+
+<ol>
+  <li>既定ブランチでリポジトリを開く。CI は緑か、既知の赤か。</li>
+  <li>複雑度ツールを実行し、5を超えるメソッドの一覧を出す。</li>
+  <li>依存グラフを生成する（<code>deptrac</code>、<code>ArchUnit</code>、<code>jdeps</code>、<code>cmake --graphviz</code>）。</li>
+  <li>各節の時間を区切る。集めているのは証拠で、修正ではありません。</li>
+</ol>
+
+<h2>O — 規律（ルール1〜17）</h2>
+
+<ul class="checklist">
+  <li><strong>複雑度:</strong> 5を超えるメソッドがない。</li>
+  <li>インデントが二階層のメソッドがない。</li>
+  <li><code>else</code> が出てこない（検索し、各出現を正当化する）。</li>
+  <li><code>switch</code>/<code>case</code> が出てこない。</li>
+  <li>マジックナンバー・マジックストリングがない。</li>
+  <li>クラスは50行以下、メソッドは20行以下、パッケージは10クラス以下。</li>
+  <li>インスタンス変数が3つ以上のクラスがない。</li>
+  <li>引数が3つ以上のメソッド・コンストラクタがない。</li>
+  <li>メソッドが3つ以上のインターフェースがない。</li>
+  <li>公開名に略語がない。</li>
+  <li>真偽値は <code>is</code>/<code>has</code>/<code>can</code>/<code>should</code> で始まり、メソッドは動詞で始まる。</li>
+  <li>定数は <code>UPPER_SNAKE_CASE</code>、プロパティとメソッドは <code>camelCase</code>。</li>
+</ul>
+
+<h2>T — 構成（ルール18〜24）</h2>
+
+<ul class="checklist">
+  <li>すべてのコレクションが独自のクラス。</li>
+  <li>ビルダー以外に、ドットが二つ以上続く呼び出しがない。</li>
+  <li>ファクトリと純粋関数以外に静的メソッドがない。</li>
+  <li>コマンドとクエリが分離され、値を返すメソッドに副作用がない。</li>
+  <li>グローバル状態もシングルトンもなく、依存はコンストラクタで届く。</li>
+  <li>ユースケースは公開メソッドを一つ持つクラス。</li>
+  <li>配線は単一の合成ルートで行われる。</li>
+  <li>依存グラフに循環がない。</li>
+</ul>
+
+<h2>A — 装甲（ルール25〜31）</h2>
+
+<ul class="checklist">
+  <li>getter、setter、可変の公開プロパティがない。</li>
+  <li>プロパティは private。protected はフレームワーク継承のみ。</li>
+  <li>クラスは既定で <code>final</code> または <code>sealed</code>。</li>
+  <li>フレームワークの基底クラス以外に継承がない。</li>
+  <li>入力はコンストラクタと公開メソッドで検証される。</li>
+  <li>前提条件はドメイン例外で早期に失敗する。</li>
+  <li>入力引数を変更しない。</li>
+  <li>ドメインのファイルがフレームワーク・ORM・HTTP・DB を import しない。</li>
+  <li>アーキテクチャテストが層の規則を CI で強制する。</li>
+</ul>
+
+<h2>K — 静けさ（ルール32〜36）</h2>
+
+<ul class="checklist">
+  <li>プロパティは不変で、メソッドは新しいインスタンスを返す。</li>
+  <li>コレクションを返すメソッドは空のコレクションを返し、<code>null</code> を返さない。</li>
+  <li>失敗は明示的 — Result/Either か例外 — で、<code>null</code> ではない。</li>
+  <li>隠れた依存、マジックメソッド、暗黙の変換がない。</li>
+  <li>ドメインに SQL・HTTP・ファイルパスがない。</li>
+  <li>リポジトリはコレクションのように振る舞い、インメモリ実装がある。</li>
+  <li>トランザクションはインフラが開き、ドメインは開かない。</li>
+</ul>
+
+<h2>U — 契約（ルール37〜40）</h2>
+
+<ul class="checklist">
+  <li>意味を持つプリミティブと文字列は値オブジェクト。</li>
+  <li>明示的なシリアライズ以外に <code>mixed</code>/<code>array</code>/<code>object</code> がない。</li>
+  <li>すべての公開メソッドがインターフェースで宣言されている。</li>
+  <li>コメントは「なぜ」を説明し、契約に置かれている。</li>
+  <li>公開された契約（OpenAPI/IDL）があり、版を持ち、語彙と一致している。</li>
+  <li>破壊的変更が CI（spec の diff）で検出される。</li>
+  <li>どのクライアントも DB や内部エンドポイントへ直接アクセスしない。</li>
+</ul>
+
+<h2>採点</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>点数</th><th>判定</th><th>行動</th></tr></thead>
+    <tbody>
+      <tr><td>90〜100%</td><td>準拠</td><td>CI チェックを維持し、四半期ごとに再監査。</td></tr>
+      <tr><td>70〜89%</td><td>ほぼ準拠</td><td>次のスプリントで失敗した節を直す。各失敗に担当者を置く。</td></tr>
+      <tr><td>40〜69%</td><td>部分適用</td><td>スプリントごとに一節。書き直しは始めない。</td></tr>
+      <tr><td>&lt; 40%</td><td>未適用</td><td>OTAKU ではない。そう言い、移行するか決める。正直さは儀式より安い。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>CI のフック</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>チェック</th><th>PHP</th><th>C#</th><th>Java</th><th>C++</th><th>TypeScript</th></tr></thead>
+    <tbody>
+      <tr><td>複雑度 ≤ 5</td><td>PHP_CodeSniffer</td><td>CA1502</td><td>PMD</td><td>clang-tidy</td><td>ESLint <code>complexity</code></td></tr>
+      <tr><td>大きさと様式</td><td>PHP_CodeSniffer</td><td>StyleCop</td><td>Checkstyle</td><td>clang-tidy</td><td>ESLint</td></tr>
+      <tr><td>依存</td><td>deptrac</td><td>NetArchTest</td><td>ArchUnit</td><td>CMake ターゲット</td><td>ts-arch</td></tr>
+      <tr><td>契約</td><td colspan="5">spec の diff と結合テストでのスキーマ検証</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>結果をどう扱うか</h2>
+
+<p>
+  点数を README に、日付と監査したコミットとともに載せます。誰かを辱めるためではなく、進捗を
+  見えるようにするためです。四半期で45%から72%へ行くリポジトリは、失敗ではなく成功の物語です。
+</p>
+
+<Note label="ルール" variant="rule">
+  <p>
+    失敗した項目はすべて担当者と日付を名指さなければなりません。そうでなければ所見ではなく、
+    意見です。
+  </p>
+</Note>

@@ -1,0 +1,127 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const phpEntity = String.raw`namespace App\Domain\Account;
+
+final class Account
+{
+    private function __construct(
+        private AccountId $id,
+        private Money $balance,
+    ) {}
+
+    public function withdraw(Money $amount): self
+    {
+        if ($this->balance->isLessThan($amount)) {
+            throw new InsufficientFunds($this->id);
+        }
+
+        return new self($this->id, $this->balance->subtract($amount));
+    }
+}`;
+
+const tsPorts = String.raw`export interface Accounts {
+  get(id: AccountId): Account;
+  save(...accounts: Account[]): void;
+}
+
+export interface Ledger {
+  record(transfer: Transfer): Receipt;
+}`;
+---
+
+<p class="lede">
+  ドメインはシステムで唯一、差し替えられない部分です。装甲はそれを隠すことではなく、他の何も
+  その形を決められないようにすることです。
+</p>
+
+<h2>依存の規則</h2>
+
+<p>
+  ソースの依存は内側へ向きます。内側の円にあるものは、外側の円にある何かの名前を知りません。
+  クラスも、注釈も、フレームワークのインターフェースも、データベースの型もです。
+</p>
+
+<pre><code>Interface  ──▶  Application  ──▶  Domain
+Infrastructure ──────────────────▶  Domain</code></pre>
+
+<p>
+  矢印はコンパイル時の import です。<code>Domain/Account.php</code> が
+  <code>Doctrine\ORM\Mapping\Entity</code> を import すると、矢印は逆向きになり、フレームワークが
+  業務ルールの所有者になります。
+</p>
+
+<h2>ポートとアダプタ</h2>
+
+<p>
+  ドメインは必要なものをポートとして宣言します。インフラがアダプタとして実装します。語彙は
+  ドメインに、ベンダーはアダプタに残ります。
+</p>
+
+<CodeTabs
+  title="同じポート、二つの言語"
+  tabs={[{ label: 'TypeScript', lang: 'ts', code: tsPorts }]}
+/>
+
+<p>
+  PHP・C#・Java では <code>interface</code> で同じ形になります。C++ では仮想デストラクタを持つ
+  抽象クラスです。契約がドメインに属し、詳細を一切運ばないことが要点です。
+</p>
+
+<h2>何も知らないエンティティ</h2>
+
+<CodeTabs
+  title="エンティティ"
+  tabs={[{ label: 'PHP', lang: 'php', code: phpEntity }]}
+/>
+
+<p>
+  注釈も基底クラスも active record もありません。エンティティはデータベースもコンテナも
+  フレームワークの起動もなしに、単体テストで生成できます。
+</p>
+
+<h2>アンチパターン</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>症状</th><th>意味</th><th>修正</th></tr></thead>
+    <tbody>
+      <tr><td>エンティティがフレームワークの基底クラスを継承</td><td>フレームワークがライフサイクルを所有</td><td>素のオブジェクト＋アダプタでマッピング</td></tr>
+      <tr><td>ドメインが <code>EntityManager</code>、<code>DbContext</code>、<code>Session</code> を import</td><td>永続化が中核にある</td><td>ドメインにリポジトリのポート</td></tr>
+      <tr><td>ドメインのフィールドに検証注釈</td><td>転送の規則が業務規則になった</td><td>ユースケースか値オブジェクトで検証</td></tr>
+      <tr><td>ドメインが HTTP 例外を投げる</td><td>アダプタが内側へ漏れた</td><td>ドメイン例外＋境界でマッピング</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>矢印をビルド失敗にする</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>言語</th><th>アーキテクチャテスト</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td><code>deptrac</code>、PHPStan のカスタム規則</td></tr>
+      <tr><td>C#</td><td><code>NetArchTest</code>、NDepend</td></tr>
+      <tr><td>Java</td><td><code>ArchUnit</code></td></tr>
+      <tr><td>C++</td><td>CMake のターゲット依存規則、<code>include-what-you-use</code></td></tr>
+      <tr><td>TypeScript</td><td><code>ts-arch</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<Note label="移行" variant="warn">
+  <p>
+    世界を止める必要はありません。まずユースケースを抽出し、ポートを与え、それから ORM 呼び出しを
+    一つずつアダプタへ移します。矢印がついに向きを変えたことを、コンパイラとアーキテクチャテストが
+    教えてくれます。
+  </p>
+</Note>
+
+<h2>「装甲」ではないもの</h2>
+
+<p>
+  四つのフォルダに同じモデルを四回コピーすることではありません。ドメインのエンティティと
+  データベースのエンティティが同一なら、境界は儀式です — コードを動かしただけで、依存は
+  動いていません。テストは import グラフであり、ディレクトリの木ではありません。
+</p>
