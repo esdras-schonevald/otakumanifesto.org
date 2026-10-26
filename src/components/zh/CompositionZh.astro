@@ -1,0 +1,131 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const phpPipe = String.raw`final class TransferMoney
+{
+    public function __construct(
+        private Accounts $accounts,
+        private Ledger $ledger,
+    ) {}
+
+    public function __invoke(Transfer $transfer): Receipt
+    {
+        $source = $this->accounts->get($transfer->source());
+        $target = $this->accounts->get($transfer->target());
+
+        $debited = $source->debit($transfer->amount());
+        $credited = $target->credit($transfer->amount());
+
+        $this->accounts->save($debited, $credited);
+
+        return $this->ledger->record($transfer);
+    }
+}`;
+
+const tsPipe = String.raw`class TransferMoney {
+  constructor(
+    private readonly accounts: Accounts,
+    private readonly ledger: Ledger,
+  ) {}
+
+  run(transfer: Transfer): Receipt {
+    const source = this.accounts.get(transfer.source);
+    const target = this.accounts.get(transfer.target);
+
+    this.accounts.save(
+      source.debit(transfer.amount),
+      target.credit(transfer.amount),
+    );
+
+    return this.ledger.record(transfer);
+  }
+}`;
+---
+
+<p class="lede">
+  Unix 工具只做一件事，并通过 stdin 与 stdout 交流。这里的部件只做一件事，并通过契约交流。
+  其余的一切——如何被调用、在哪里运行、谁拥有它——都是配置。
+</p>
+
+<h2>一个部件，一件工作</h2>
+
+<p>
+  检验不是「它够小吗」，而是「我能否用一句不含<em>和</em>的话描述它」。一个类既验证转账
+  <em>又</em>持久化它，就有两个变更理由、两种失败模式要测试。在<em>和</em>的位置切开。
+</p>
+
+<h2>数据管道</h2>
+
+<p>
+  输入从适配器进入（HTTP 控制器、CLI 命令、队列消费者），以朴素数据穿过核心，再从另一个
+  适配器离开。核心永远不知道是哪个适配器调用了它。
+</p>
+
+<CodeTabs
+  title="用例接收端口，而不是框架"
+  tabs={[
+    { label: 'PHP', lang: 'php', code: phpPipe },
+    { label: 'TypeScript', lang: 'ts', code: tsPipe },
+  ]}
+/>
+
+<p>
+  注意这个类没有导入什么：没有 HTTP，没有 ORM，没有容器。它只知道两个以业务命名的端口，
+  其他一概不知。这就是管道。
+</p>
+
+<h2>组合发生在边界</h2>
+
+<p>
+  总得有人决定哪个实现是真的。这个决定属于组合根——唯一一处，通常是入口点，把基础设施接到
+  核心上。
+</p>
+
+<Note label="坏味道" variant="warn">
+  <p>
+    如果领域类向容器索取依赖，组合就漏进了内部。用例里的 <code>$container-&gt;get(...)</code>
+    是一个隐藏参数，也是一道无法测试的接缝。
+  </p>
+</Note>
+
+<h2>部件必须可替换，而不只是小</h2>
+
+<ol>
+  <li><strong>一个契约</strong>，用领域语言描述行为。</li>
+  <li><strong>不泄漏实现的类型</strong>（签名里没有 <code>QueryBuilder</code>）。</li>
+  <li><strong>每个角色一个实现</strong>在生产，一个内存实现在测试。</li>
+</ol>
+
+<p>
+  内存实现是你写过的最便宜的架构测试：如果用例无法对假对象运行，它就不是被组合起来的，
+  而是被焊在框架上。
+</p>
+
+<h2>环是失败的信号</h2>
+
+<p>
+  组合让依赖可见。图里出现环时，两个部件其实是一个，或者某个职责放错了位置。绘制图的工具——
+  <code>deptrac</code>、<code>ArchUnit</code>、<code>jdeps</code>、<code>include-what-you-use</code>
+  ——把这个信号变成构建失败。
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>语言</th><th>组合机制</th><th>图校验</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td>构造函数注入，边界上的 PSR-11 容器</td><td>deptrac</td></tr>
+      <tr><td>C#</td><td>构造函数注入，<code>IServiceCollection</code></td><td>NetArchTest</td></tr>
+      <tr><td>Java</td><td>构造函数注入，手工装配或 CDI</td><td>ArchUnit、<code>jdeps</code></td></tr>
+      <tr><td>C++</td><td>构造函数中的引用/指针，在 <code>main</code> 中装配</td><td>构建图、IWYU</td></tr>
+      <tr><td>TypeScript</td><td>构造函数注入，在入口装配</td><td>ts-arch</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>组合不是什么</h2>
+
+<p>
+  不是「给一切都抽接口」。只有一个实现、又没有测试替身的接口是仪式。组合由第二个实现来
+  证明——真实的或内存的。
+</p>

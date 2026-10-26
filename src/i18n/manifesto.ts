@@ -134,7 +134,7 @@ export const manifesto: Record<Locale, ManifestoContent> = {
       { letter: 'T', name: '组合的工具', short: '像 Unix 一样组合。', body: '小而清晰的输入输出部件。应用是一条数据管道，副作用留在边缘。' },
       { letter: 'A', name: '装甲核心', short: '保护业务核心。', body: '依赖只向内。实体与用例永远不知道框架的名字。' },
       { letter: 'K', name: '让基础设施保持沉默', short: '基础设施只是细节。', body: '持久化像内存集合一样工作。失败是显式的，状态默认不可变。' },
-      { letter: 'U', name: '通用语言与契约', short: '说用户的语言。', body: '把通用语言写进设计先行的契约。原始类型被包装；每个公有方法都有契约。' },
+      { letter: 'U', name: '统一语言与契约', short: '说用户的语言。', body: '把通用语言写进设计先行的契约。原始类型被包装；每个公有方法都有契约。' },
     ],
     metricH: '核心指标',
     metricP1:

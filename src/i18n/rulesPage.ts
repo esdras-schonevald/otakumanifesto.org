@@ -8,7 +8,7 @@ interface RulesPageCopy {
   outro: string;
 }
 
-export const rulesPage: Record<'pt-br' | 'es' | 'fr' | 'it' | 'ja', RulesPageCopy> = {
+export const rulesPage: Record<'pt-br' | 'es' | 'fr' | 'it' | 'ja' | 'zh', RulesPageCopy> = {
   'pt-br': {
     title: 'As quarenta regras',
     kicker: 'Trilha O — Domine sua Disciplina',
@@ -57,9 +57,20 @@ export const rulesPage: Record<'pt-br' | 'es' | 'fr' | 'it' | 'ja', RulesPageCop
     outro:
       '迷ったら、より制限の強い選択をしてください。それがこの哲学の定める判断基準です。',
   },
+
+  zh: {
+    title: '四十条规则',
+    kicker: '路线 O — 自律',
+    lede: '四十条规则，每条都有一个阈值。它们之所以机械，是因为依赖品味的规则无法评审、无法自动化，也无法争论。',
+    intro:
+      '<strong>每个方法的圈复杂度 ≤ 5</strong> 是主要指标。它计算读者必须同时持有的独立路径数：每个分支、循环和布尔运算符各加一。纪律部分的其余内容都是为了让这个数字保持低位。下面每条规则都有自己的页面，说明目的、概念、问题与解决方案。',
+    outro:
+      '拿不准时，选择更严格的选项。这就是这套哲学规定的裁决标准。',
+  },
 };
 
 export function rulesPageFor(locale: Locale): RulesPageCopy {
+  if (locale === 'zh') return rulesPage.zh;
   if (locale === 'ja') return rulesPage.ja;
   if (locale === 'it') return rulesPage.it;
   if (locale === 'fr') return rulesPage.fr;

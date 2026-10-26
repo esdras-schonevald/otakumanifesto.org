@@ -1,0 +1,96 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  这套哲学已经超出了孕育它的项目。这个网站是它现在的家——独立于任何语言、包管理器或供应商。
+</p>
+
+<h2>为什么另立门户</h2>
+
+<p>
+  OTAKU 诞生于 <a href="https://phprise.org">PHPRise</a>，一个 PHP 基金会。那个出身只是第一次实现
+  的偶然，并不是思想本身的属性：规则谈的是缩进、集合、依赖方向和契约，而任何面向对象语言都能
+  表达它们。
+</p>
+
+<p>
+  把宣言放在 PHP 组织里同时犯下两个错误：它暗示这套哲学需要 PHP，也让 PHP 仓库背负了一份与它们
+  无关的文档副本。PHPRise 现在指向这里，而不是复制它。
+</p>
+
+<h2>作者</h2>
+
+<p>
+  由 <a href="https://esdras.me">Esdras Schönevald</a> 撰写与维护，Lead Software Engineer，
+  PHPRise 的维护者。这套哲学来自二十年构建支付、身份与医疗系统的经验，也来自一个反复出现的
+  体会：软件里昂贵的从来不是写下的代码，而是你维持的结构。
+</p>
+
+<p>
+  思想上的债务列在<a href="https://esdras.me/#inspirations">个人网站</a>上：Object Calisthenics
+  （Jeff Bay）、Clean Architecture（Robert C. Martin）、DDD（Eric Evans）、Unix 哲学、Conway、
+  Parnas 与 Dijkstra。
+</p>
+
+<h2>许可</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>部分</th><th>许可</th><th>你可以</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>宣言与指南正文</td>
+        <td><a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></td>
+        <td>在署名与相同许可下共享与改编</td>
+      </tr>
+      <tr>
+        <td>代码示例</td>
+        <td>MIT</td>
+        <td>在源码中保留署名即可使用、修改与销售</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  署名：链接到 <code>https://otakumanifesto.org</code> 并注明作者即可。
+</p>
+
+<h2>参与贡献</h2>
+
+<p>
+  源码公开在
+  <a href="https://github.com/esdras-schonevald/otakumanifesto.org">github.com/esdras-schonevald/otakumanifesto.org</a>。
+  网站是 Astro 静态构建——没有运行时，没有数据库。
+</p>
+
+<ul>
+  <li><strong>更正</strong>（错别字、失效链接、错误代码）——直接开 issue 或 PR。</li>
+  <li><strong>其他语言的示例</strong>——欢迎，前提是规则本身不变。</li>
+  <li><strong>修改规则</strong>——先开 issue。规则被故意设计得难以改动，这正是重点。</li>
+</ul>
+
+<h2>版本</h2>
+
+<p>
+  这套哲学按日期而不是语义化版本编号。规则从不被悄悄修改：变更会被宣布、讨论，并以示例的
+  形式反映到指南中。
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>版本</th><th>变更</th></tr></thead>
+    <tbody>
+      <tr><td>2026.10</td><td>第二版：四十条可度量规则，以圈复杂度为主要指标，加入 TypeScript 与多语言翻译。</td></tr>
+      <tr><td>2026.10</td><td>首版公开于 PHPRise 之外：五个支柱、三种形态、跨语言指南。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<Note label="关于热忱">
+  <p>
+    一套变成人格测试的哲学已经失败。规则是关于代码的，而代码可以改。请与规则争论，永远不要与
+    人争论。
+  </p>
+</Note>

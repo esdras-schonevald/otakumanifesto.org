@@ -1,0 +1,155 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const openapi = String.raw`openapi: 3.1.0
+info:
+  title: Accounts
+  version: 1.4.0
+paths:
+  /accounts/{id}/withdrawals:
+    post:
+      operationId: withdraw
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, currency]
+              properties:
+                amount: { type: integer, minimum: 1 }
+                currency: { type: string, enum: [BRL, USD] }
+      responses:
+        "201":
+          description: 提现已受理
+        "409":
+          description: 余额不足`;
+
+const phpContract = String.raw`namespace App\Domain\Account;
+
+final class Withdrawal
+{
+    private function __construct(
+        private AccountId $account,
+        private Money $amount,
+    ) {}
+
+    public static function fromRequest(AccountId $account, Money $amount): self
+    {
+        if ($amount->isNegative()) {
+            throw new InvalidWithdrawalAmount($amount);
+        }
+
+        return new self($account, $amount);
+    }
+}`;
+---
+
+<p class="lede">
+  两个系统在契约上集成，而不是在类上。契约是你不能随意改动的部分，而其中的语言是业务专家
+  必须能认出的部分。
+</p>
+
+<h2>统一语言</h2>
+
+<p>
+  如果专家说「结算」，代码就不该叫 <code>PaymentResult</code>。命名不是装饰：错误的名字会在
+  某个人脑子里强加一层翻译，而需求就在那层翻译里丢失。
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>业务说</th><th>代码说</th><th>为什么疼</th></tr></thead>
+    <tbody>
+      <tr><td>结算</td><td><code>PaymentResult</code></td><td>一个概念两个名字；报表与代码不一致</td></tr>
+      <tr><td>拒付</td><td><code>refund</code></td><td>不同的生命周期被压进一个类型</td></tr>
+      <tr><td>持卡人</td><td><code>user</code></td><td>「User」把技术主体漏进金融规则</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  检验是机械的：向专家朗读一个用例。当他打断你纠正某个词时，代码就是错的。
+</p>
+
+<h2>设计先行</h2>
+
+<p>
+  契约先于实现。它是两个团队可以低成本争论的产物，也是能在重写中存活下来的东西。
+</p>
+
+<CodeTabs
+  title="OpenAPI 3.1——承诺"
+  tabs={[{ label: 'openapi.yaml', lang: 'yaml', code: openapi }]}
+/>
+
+<p>
+  注意契约<strong>不</strong>包含什么：类名、数据库列、框架注解。它描述资源、动词和失败模式
+  ——与业务使用的同一套词汇。
+</p>
+
+<h2>代码里的契约</h2>
+
+<CodeTabs
+  title="验证属于概念"
+  tabs={[{ label: 'PHP', lang: 'php', code: phpContract }]}
+/>
+
+<p>
+  请求对象不是一袋 DTO。它是能表示一笔有效提现的最小类型，也是「金额必须为正」唯一被允许
+  存在的地方。
+</p>
+
+<h2>兼容性规则</h2>
+
+<ul>
+  <li><strong>只做加法。</strong>新增可选字段和新增端点是安全的；改名和删除会破坏。</li>
+  <li><strong>绝不复用字段名</strong>去表达另一种含义。那是无声的破坏性变更。</li>
+  <li><strong>给契约版本，而不是给类。</strong>语义版本在 API 上，不在内部命名空间。</li>
+  <li><strong>先弃用再删除。</strong>公告、在响应里警告、然后移除，按这个顺序。</li>
+  <li><strong>错误形状也是契约的一部分。</strong>一个没有文档化响应体的 <code>409</code> 就是被违背的承诺。</li>
+</ul>
+
+<h2>测试承诺，而不是实现</h2>
+
+<p>
+  契约测试验证实现仍然遵守文档：响应 schema 校验、消费者驱动测试（Pact），以及一个在 CI 中
+  把已发布 spec 与上一版比对、对破坏性变更失败的步骤。
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>语言</th><th>契约工具</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td>OpenAPI 校验器、<code>league/openapi-psr7-validator</code>、Pact PHP</td></tr>
+      <tr><td>C#</td><td>NSwag、Microsoft.OpenApi、Pact .NET</td></tr>
+      <tr><td>Java</td><td>springdoc-openapi、Pact JVM</td></tr>
+      <tr><td>C++</td><td>集成测试中的 spec 校验、通过绑定使用 Pact</td></tr>
+      <tr><td>TypeScript</td><td>从 spec 生成 zod/valibot、Pact JS</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<Note label="规则" variant="rule">
+  <p>
+    如果代码读起来不像业务专家说话，或者契约被绕开，系统就是坏的。
+  </p>
+</Note>
+
+<h2>绕开是默认的失败方式</h2>
+
+<p>
+  契约很少因糟糕的设计而破裂——它们因便利而被绕开：一个服务读另一个服务的数据库，一个客户端
+  访问内部端点，一个「临时」字段直接建在生产里。每次绕开都是一个第二真相来源，而两个真相来源
+  从不会长期相等。
+</p>
+
+<p>
+  对策先是社会性的，然后才是技术性的：契约必须是唯一的门，而门必须比墙更便宜。
+</p>

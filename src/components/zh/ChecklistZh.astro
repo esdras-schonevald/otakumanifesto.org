@@ -1,0 +1,125 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  无法验证的哲学只是装饰。这是我针对真实仓库执行的审计——一小时，不重写任何东西，只收集证据。
+</p>
+
+<h2>开始之前</h2>
+
+<ol>
+  <li>在默认分支打开仓库，CI 要么是绿的，要么是已知的红。</li>
+  <li>运行复杂度工具，导出超过 5 的方法清单。</li>
+  <li>生成依赖图（<code>deptrac</code>、<code>ArchUnit</code>、<code>jdeps</code>、<code>cmake --graphviz</code>）。</li>
+  <li>给每一节限定时间。你在收集证据，不是修复。</li>
+</ol>
+
+<h2>O — 纪律（规则 1–17）</h2>
+
+<ul class="checklist">
+  <li><strong>复杂度：</strong>没有方法超过 5。</li>
+  <li>没有方法出现两层缩进。</li>
+  <li>不出现 <code>else</code>（搜索，并逐处解释）。</li>
+  <li>不出现 <code>switch</code>/<code>case</code>。</li>
+  <li>没有魔法数字与魔法字符串。</li>
+  <li>类不超过 50 行；方法不超过 20 行；包不超过 10 个类。</li>
+  <li>没有任何类超过两个实例变量。</li>
+  <li>没有方法或构造函数超过两个参数。</li>
+  <li>没有接口超过两个方法。</li>
+  <li>公开名称中没有缩写。</li>
+  <li>布尔方法以 <code>is</code>/<code>has</code>/<code>can</code>/<code>should</code> 开头；方法以动词开头。</li>
+  <li>常量用 <code>UPPER_SNAKE_CASE</code>；属性和方法用 <code>camelCase</code>。</li>
+</ul>
+
+<h2>T — 组合（规则 18–24）</h2>
+
+<ul class="checklist">
+  <li>每个集合都是自己的类。</li>
+  <li>除构建器外，没有超过一个点的调用链。</li>
+  <li>除工厂和纯函数外，没有静态方法。</li>
+  <li>命令与查询分离；返回值的方法没有副作用。</li>
+  <li>没有全局状态或单例；依赖通过构造函数进入。</li>
+  <li>用例是只有一个公开方法的类。</li>
+  <li>装配发生在唯一的组合根。</li>
+  <li>依赖图没有环。</li>
+</ul>
+
+<h2>A — 装甲（规则 25–31）</h2>
+
+<ul class="checklist">
+  <li>没有 getter、setter 或可变的公开属性。</li>
+  <li>属性私有；<code>protected</code> 只用于框架继承。</li>
+  <li>类默认 <code>final</code> 或 <code>sealed</code>。</li>
+  <li>除框架基类外没有继承。</li>
+  <li>输入在构造函数和公开方法中验证。</li>
+  <li>前置条件以领域异常快速失败。</li>
+  <li>输入参数从不被修改。</li>
+  <li>领域文件不导入框架、ORM、HTTP 或数据库。</li>
+  <li>架构测试在 CI 中强制分层规则。</li>
+</ul>
+
+<h2>K — 沉默（规则 32–36）</h2>
+
+<ul class="checklist">
+  <li>属性不可变；方法返回新实例。</li>
+  <li>返回集合的方法返回空集合，绝不返回 <code>null</code>。</li>
+  <li>失败是显式的——Result/Either 或异常——绝不用 <code>null</code>。</li>
+  <li>没有隐藏依赖、魔术方法或隐式转换。</li>
+  <li>领域中没有 SQL、HTTP 或文件路径。</li>
+  <li>仓库像集合一样工作；存在内存实现。</li>
+  <li>事务由基础设施开启，而不是领域。</li>
+</ul>
+
+<h2>U — 契约（规则 37–40）</h2>
+
+<ul class="checklist">
+  <li>承载意义的原始类型与字符串被包装成值对象。</li>
+  <li>除显式序列化外，没有 <code>mixed</code>/<code>array</code>/<code>object</code>。</li>
+  <li>每个公开方法都在接口中声明。</li>
+  <li>注释解释原因，并且位于契约中。</li>
+  <li>存在已发布的契约（OpenAPI/IDL），有版本，且与词汇一致。</li>
+  <li>破坏性变更在 CI 中被发现（spec diff）。</li>
+  <li>没有客户端直接访问数据库或内部端点。</li>
+</ul>
+
+<h2>评分</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>得分</th><th>结论</th><th>行动</th></tr></thead>
+    <tbody>
+      <tr><td>90–100%</td><td>合规</td><td>保留 CI 检查，每季度复审。</td></tr>
+      <tr><td>70–89%</td><td>基本合规</td><td>下一个迭代修掉失败的章节；每个失败都要有负责人。</td></tr>
+      <tr><td>40–69%</td><td>部分应用</td><td>每个迭代一节。不要开始重写。</td></tr>
+      <tr><td>&lt; 40%</td><td>未应用</td><td>这不是 OTAKU 代码库。说出来，再决定是否迁移——诚实比仪式便宜。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>CI 钩子</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>检查</th><th>PHP</th><th>C#</th><th>Java</th><th>C++</th><th>TypeScript</th></tr></thead>
+    <tbody>
+      <tr><td>复杂度 ≤ 5</td><td>PHP_CodeSniffer</td><td>CA1502</td><td>PMD</td><td>clang-tidy</td><td>ESLint <code>complexity</code></td></tr>
+      <tr><td>规模与风格</td><td>PHP_CodeSniffer</td><td>StyleCop</td><td>Checkstyle</td><td>clang-tidy</td><td>ESLint</td></tr>
+      <tr><td>依赖</td><td>deptrac</td><td>NetArchTest</td><td>ArchUnit</td><td>CMake 目标</td><td>ts-arch</td></tr>
+      <tr><td>契约</td><td colspan="5">spec diff 与集成测试中的 schema 校验</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>如何处理结果</h2>
+
+<p>
+  把分数写进 README，附上日期与被审计的提交。不是为了羞辱谁，而是让进展可见。一个季度里从
+  45% 走到 72% 的仓库，是成功的叙事，不是失败。
+</p>
+
+<Note label="规则" variant="rule">
+  <p>
+    每个失败项都必须指出一个负责人和一个日期，否则它不是发现，而是意见。
+  </p>
+</Note>

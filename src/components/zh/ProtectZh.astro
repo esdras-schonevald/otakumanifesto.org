@@ -1,0 +1,122 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const phpEntity = String.raw`namespace App\Domain\Account;
+
+final class Account
+{
+    private function __construct(
+        private AccountId $id,
+        private Money $balance,
+    ) {}
+
+    public function withdraw(Money $amount): self
+    {
+        if ($this->balance->isLessThan($amount)) {
+            throw new InsufficientFunds($this->id);
+        }
+
+        return new self($this->id, $this->balance->subtract($amount));
+    }
+}`;
+
+const tsPorts = String.raw`export interface Accounts {
+  get(id: AccountId): Account;
+  save(...accounts: Account[]): void;
+}
+
+export interface Ledger {
+  record(transfer: Transfer): Receipt;
+}`;
+---
+
+<p class="lede">
+  领域是系统中唯一不可替换的部分。装甲不是把它藏起来，而是确保没有别的东西能决定它的形状。
+</p>
+
+<h2>依赖规则</h2>
+
+<p>
+  源码依赖指向内部。内圈里的任何东西都不能知道外圈里东西的名字：类、注解、框架接口、
+  数据库类型，全都不行。
+</p>
+
+<pre><code>Interface  ──▶  Application  ──▶  Domain
+Infrastructure ──────────────────▶  Domain</code></pre>
+
+<p>
+  箭头是编译期的导入。如果 <code>Domain/Account.php</code> 导入了
+  <code>Doctrine\ORM\Mapping\Entity</code>，箭头就指反了，框架从此拥有你的业务规则。
+</p>
+
+<h2>端口与适配器</h2>
+
+<p>
+  领域把它需要的东西声明为端口，基础设施实现为适配器。词汇留在领域，供应商留在适配器。
+</p>
+
+<CodeTabs
+  title="同一个端口，两种语言"
+  tabs={[{ label: 'TypeScript', lang: 'ts', code: tsPorts }]}
+/>
+
+<p>
+  在 PHP、C# 和 Java 里形状相同，用 <code>interface</code>；C++ 里则是带虚析构的抽象类。
+  关键在契约属于领域，且不携带任何细节。
+</p>
+
+<h2>一个什么都不知道的实体</h2>
+
+<CodeTabs
+  title="实体"
+  tabs={[{ label: 'PHP', lang: 'php', code: phpEntity }]}
+/>
+
+<p>
+  没有注解，没有基类，没有 active record。实体可以在单元测试里构造，不需要数据库、容器或
+  启动框架。
+</p>
+
+<h2>反模式</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>症状</th><th>含义</th><th>修法</th></tr></thead>
+    <tbody>
+      <tr><td>实体继承框架基类</td><td>框架掌握了生命周期</td><td>朴素对象＋适配器里映射</td></tr>
+      <tr><td>领域导入 <code>EntityManager</code>、<code>DbContext</code>、<code>Session</code></td><td>持久化进入了核心</td><td>领域里放仓库端口</td></tr>
+      <tr><td>领域字段上的验证注解</td><td>传输规则变成了业务规则</td><td>在用例或值对象里验证</td></tr>
+      <tr><td>领域抛出 HTTP 异常</td><td>适配器漏了进来</td><td>领域异常＋边界处映射</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>让箭头成为构建失败</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>语言</th><th>架构测试</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td><code>deptrac</code>、PHPStan 自定义规则</td></tr>
+      <tr><td>C#</td><td><code>NetArchTest</code>、NDepend</td></tr>
+      <tr><td>Java</td><td><code>ArchUnit</code></td></tr>
+      <tr><td>C++</td><td>CMake 目标依赖规则、<code>include-what-you-use</code></td></tr>
+      <tr><td>TypeScript</td><td><code>ts-arch</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<Note label="迁移" variant="warn">
+  <p>
+    你不需要让世界停下来。先抽出用例，给它端口，然后把 ORM 调用一个个搬进适配器。编译器与
+    架构测试会在箭头终于指向内部时告诉你。
+  </p>
+</Note>
+
+<h2>「装甲」不是什么</h2>
+
+<p>
+  不是四个文件夹里放四份相同的模型。如果领域实体和数据库实体一模一样，边界就是仪式——
+  你搬动了代码，没有搬动依赖。检验的是导入图，不是目录树。
+</p>

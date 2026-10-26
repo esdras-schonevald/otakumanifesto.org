@@ -1,0 +1,152 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  这套哲学对语言中立，但词汇不中立。每个生态对值对象有不同的称呼、不同的集合表达方式，
+  以及不同的工具来证明依赖指向内部。
+</p>
+
+<h2>同样的概念，五套词汇</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>概念</th><th>PHP</th><th>C#</th><th>Java</th><th>C++</th><th>TypeScript</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>值对象</td>
+        <td><code>final class</code> ＋ 私有构造函数</td>
+        <td><code>record</code> 或 <code>sealed class</code></td>
+        <td><code>record</code></td>
+        <td><code>class</code> ＋ <code>operator==</code></td>
+        <td><code>class</code> ＋ 私有构造函数</td>
+      </tr>
+      <tr>
+        <td>一等集合</td>
+        <td>包装 <code>array</code> 的类</td>
+        <td>包装 <code>IReadOnlyList&lt;T&gt;</code> 的类</td>
+        <td>包装 <code>List&lt;T&gt;</code> 的类</td>
+        <td>包装 <code>std::vector&lt;T&gt;</code> 的类</td>
+        <td>包装 <code>readonly T[]</code> 的类</td>
+      </tr>
+      <tr>
+        <td>契约</td>
+        <td><code>interface</code></td>
+        <td><code>interface</code></td>
+        <td><code>interface</code></td>
+        <td>抽象类，纯虚函数</td>
+        <td><code>interface</code></td>
+      </tr>
+      <tr>
+        <td>领域失败</td>
+        <td>继承 <code>DomainException</code> 的异常</td>
+        <td>异常或 <code>Result&lt;T&gt;</code></td>
+        <td>unchecked 异常</td>
+        <td>异常或 <code>std::expected</code></td>
+        <td>异常或 <code>Result&lt;T&gt;</code> 联合</td>
+      </tr>
+      <tr>
+        <td>包边界</td>
+        <td>Composer 包</td>
+        <td>NuGet 包／项目</td>
+        <td>Maven 模块</td>
+        <td>CMake 目标／Conan 包</td>
+        <td>npm 工作区（npm/pnpm）</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>PHP</h2>
+
+<p>
+  参考实现，也是 OTAKU 最早应用的语言。特性替代注解，<code>declare(strict_types=1)</code> 是
+  强制的，类从不闭合 PHP 标签。
+</p>
+
+<ul>
+  <li><strong>值对象：</strong><code>final class</code>、私有构造函数、命名构造器。</li>
+  <li><strong>集合：</strong>带数组字段和行为的类——签名里绝不用裸 <code>array</code>。</li>
+  <li><strong>端口：</strong>接口放在领域命名空间；适配器放在 <code>Infrastructure</code>。</li>
+  <li><strong>工具：</strong>PHP_CodeSniffer、PHPStan/Psalm、deptrac、PHPUnit、Infection。</li>
+</ul>
+
+<h2>C#</h2>
+
+<p>
+  C# 提供 <code>record</code>、<code>init</code> 和 <code>required</code>，让值对象几乎免费。
+  风险与 PHP 相反：很容易把所有东西都做成 record，从而丢掉行为。
+</p>
+
+<ul>
+  <li><strong>值对象：</strong>带验证构造函数的 <code>sealed record</code>，或带 <code>IEquatable&lt;T&gt;</code> 的 <code>sealed class</code>。</li>
+  <li><strong>集合：</strong>包装 <code>IReadOnlyList&lt;T&gt;</code>；暴露行为，而不是 <code>IEnumerable</code>。</li>
+  <li><strong>端口：</strong>接口放在领域项目；适配器放在没有反向引用的基础设施项目。</li>
+  <li><strong>工具：</strong>Roslyn 分析器、StyleCop、NetArchTest、<code>dotnet test</code>。</li>
+</ul>
+
+<h2>Java</h2>
+
+<p>
+  <code>record</code> 覆盖了值对象的情形；难的是模块边界，因为 Maven 的默认是一切互见的
+  单一 classpath。
+</p>
+
+<ul>
+  <li><strong>值对象：</strong>带验证紧凑构造函数的 <code>record</code>。</li>
+  <li><strong>集合：</strong>包装 <code>List&lt;T&gt;</code>，绝不返回内部列表。</li>
+  <li><strong>端口：</strong>接口放在领域包；ArchUnit 保证领域不导入基础设施。</li>
+  <li><strong>工具：</strong>Checkstyle、PMD、ArchUnit、<code>jdeps</code>、JUnit 5。</li>
+</ul>
+
+<h2>C++</h2>
+
+<p>
+  对成本最诚实、对所有权最严格的预言。没有反射，也没有可以躲藏的框架——这让 OTAKU 更容易
+  应用，也更难伪装。
+</p>
+
+<ul>
+  <li><strong>值对象：</strong>私有状态加默认 <code>operator==</code> 的类；按值或 <code>const&amp;</code> 传递。</li>
+  <li><strong>集合：</strong>包装 <code>std::vector&lt;T&gt;</code>；只有不变量能存活时才暴露迭代器。</li>
+  <li><strong>端口：</strong>带纯虚函数和虚析构的抽象类；头文件里没有实现。</li>
+  <li><strong>工具：</strong>clang-tidy、include-what-you-use、CMake 目标可见性、sanitizer、<code>std::expected</code>。</li>
+</ul>
+
+<h2>TypeScript</h2>
+
+<p>
+  TypeScript 是指南的第五种语言，理由很实际：今天大部分面向对象代码写在这里，而它具备这套
+  哲学所需的全部——类、接口、泛型、异常和包管理器。有两条规则容易被破坏，需要留意。
+</p>
+
+<ul>
+  <li><strong>值对象：</strong>私有构造函数加静态工厂，因为单靠 <code>readonly</code> 并不验证。</li>
+  <li><strong>集合：</strong>包装 <code>readonly T[]</code>；绝不返回内部数组。</li>
+  <li><strong>契约：</strong>端口用 <code>interface</code>；把基础设施类型挡在领域签名之外。</li>
+  <li><strong>陷阱——结构类型：</strong>形状相同就可互换。当身份重要时加一个品牌（<code>declare const brand: unique symbol</code>）。</li>
+  <li><strong>陷阱——<code>any</code>：</strong>它是本地的 <code>mixed</code>。规则 38 适用：只出现在显式序列化边界。</li>
+  <li><strong>工具：</strong>ESLint <code>complexity</code> 与 <code>max-lines-per-function</code>、<code>tsc --strict</code>、<code>ts-arch</code>、Vitest。</li>
+</ul>
+
+<Note label="建议">
+  <p>
+    <strong>Kotlin</strong> 与 <strong>Swift</strong> 分别继承 Java 与 C++ 的指引：规则相同，
+    标点不同。它们暂时不需要独立章节——规则本身没变。
+  </p>
+</Note>
+
+<h2>无法翻译的东西</h2>
+
+<ul>
+  <li><strong>注解／特性</strong>在 C++ 里没有对应物；在其他三种语言里属于基础设施，住在领域之外。</li>
+  <li><strong>垃圾回收与所有权</strong>改变聚合如何复制，不改变如何设计。</li>
+  <li><strong>异常与结果类型</strong>改变失败的签名，不改变「失败必须显式」这条规则。</li>
+  <li><strong>包管理器</strong>在装配的声明方式上不同；「没有逻辑，只有依赖」这个概念不变。</li>
+</ul>
+
+<p>
+  如果你的语言能表达类、接口和包，这套哲学就适用。如果不能，就说出来——并且不要假装。
+</p>

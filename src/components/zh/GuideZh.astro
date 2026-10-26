@@ -1,0 +1,60 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  宣言说明什么是必须的。这份指南说明它在代码里长什么样——一次一条规则，先看违反的样子，
+  因为人总是更快地在错误示例里认出自己的代码。
+</p>
+
+<h2>方法</h2>
+
+<ol>
+  <li><strong>读规则。</strong>它是一句话，不可谈判。</li>
+  <li><strong>找到违反。</strong>看破坏它的最小例子。</li>
+  <li><strong>做最小修正。</strong>不是重设计，而是满足规则的最小改动。</li>
+  <li><strong>让回退不可能。</strong>一个 linter、一个架构测试、一份评审清单。</li>
+</ol>
+
+<p>
+  每一课都以验证步骤结束。只活在文档里的规则是偏好；让构建失败的规则才是约束。
+</p>
+
+<h2>路线</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>路线</th><th>支柱</th><th>你会学到</th></tr></thead>
+    <tbody>
+      <tr><td><a href="/zh/guide/rules/">纪律</a></td><td>O</td><td>四十条可度量规则，各自带有目的、概念、问题与解决方案。</td></tr>
+      <tr><td><a href="/zh/guide/composition/">组合</a></td><td>T</td><td>小而可替换的部件、显式的输入输出、作为数据管道的应用。</td></tr>
+      <tr><td><a href="/zh/guide/protect-the-core/">装甲</a></td><td>A</td><td>依赖方向、端口与适配器、架构测试。</td></tr>
+      <tr><td><a href="/zh/guide/silent-infrastructure/">沉默</a></td><td>K</td><td>仓库、朴素对象，以及让数据库成为细节。</td></tr>
+      <tr><td><a href="/zh/guide/contracts/">契约</a></td><td>U</td><td>统一语言、设计先行，以及契约真正承诺的东西。</td></tr>
+      <tr><td><a href="/zh/guide/checklist/">审计</a></td><td>—</td><td>一小时内可对真实仓库执行的评审清单。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>关于代码示例</h2>
+
+<p>
+  示例带有语言标签页——PHP、TypeScript，规则属于结构性时还有 C#、Java、C++——始终成对出现：
+  <strong>错误</strong>与<strong>正确</strong>。语法高亮在构建时生成（Shiki，VS Code 主题），
+  网站不发送任何客户端 JavaScript。
+</p>
+
+<h2>覆盖的语言</h2>
+
+<p>
+  PHP、C#、Java、C++ 与 TypeScript 共享这套哲学所需的面向对象词汇：类、接口、异常、泛型
+  （或其近似物）以及包管理器。工具各不相同，<a href="/zh/languages/">参考章节</a>列出了每个
+  验证步骤对应的确切工具。
+</p>
+
+<Note label="开始之前" variant="warn">
+  <p>
+    不要在一周内把四十条规则套到既有代码库上。选一个模块，在那里应用，让 diff 成为论据。
+    OTAKU 靠示例传播，而不是靠命令。
+  </p>
+</Note>

@@ -1,0 +1,141 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  模块化不是事后评审出来的，而是由仓库的形态强制的。每个仓库必须恰好落在三种原型之一。
+  没有第四种选择，也没有混合体。
+</p>
+
+<h2>1 — 原子</h2>
+
+<p>
+  可能存在的最小粒度单位。如果还能继续拆分，它就不是原子。
+</p>
+
+<ul>
+  <li><strong>结构：</strong>扁平。源码根目录下只有一层目录。</li>
+  <li><strong>规则：</strong>不再细分。它只履行一个特定契约。</li>
+  <li><strong>检验：</strong>你能用一句不含「和」的话描述它吗？</li>
+  <li><strong>例子：</strong>一个值对象、一个字符串工具、一个单一的 HTTP 客户端。</li>
+</ul>
+
+<h2>2 — 装配</h2>
+
+<p>
+  连接点。装配不包含逻辑，只编排原子之间的联合，让一次依赖声明就装进十个包。
+</p>
+
+<ul>
+  <li><strong>结构：</strong>没有源码。组合关系声明在包的清单里。</li>
+  <li><strong>规则：</strong>有行为，就不是装配。</li>
+  <li><strong>检验：</strong>删掉清单，是否只剩下一个 README？</li>
+  <li><strong>例子：</strong>把 HTTP 原子打包在一起的元包，一个 commons 集合。</li>
+</ul>
+
+<h2>3 — 应用</h2>
+
+<p>
+  活着的系统。它不是库，而是业务核心的实现，遵循 Clean Architecture 与 DDD。
+</p>
+
+<ul>
+  <li><strong>结构：</strong>领域、应用、基础设施、接口——依赖指向内部。</li>
+  <li><strong>规则：</strong>保持精简。所有通用工具都下沉到原子。</li>
+  <li><strong>检验：</strong>它是否包含一个业务专家能认出的用例？</li>
+  <li><strong>例子：</strong>支付网关、身份服务。</li>
+</ul>
+
+<h2>四个生态里的同一个想法</h2>
+
+<p>产物名称会变，形态不变。</p>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>形态</th><th>PHP / Composer</th><th>C# / NuGet</th><th>Java / Maven</th><th>C++ / Conan</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>原子</strong></td>
+        <td><code>type: library</code>，单个命名空间</td>
+        <td>class library，单个命名空间</td>
+        <td>jar，单个包</td>
+        <td>header + library，单个命名空间</td>
+      </tr>
+      <tr>
+        <td><strong>装配</strong></td>
+        <td><code>type: metapackage</code>，只有 <code>require</code></td>
+        <td>无代码，只有 <code>PackageReference</code></td>
+        <td>只有 <code>&lt;dependency&gt;</code> 的 pom</td>
+        <td>只有 <code>requires</code> 的 conanfile</td>
+      </tr>
+      <tr>
+        <td><strong>应用</strong></td>
+        <td><code>type: project</code>，<code>src/Domain</code>…</td>
+        <td>带分层的可执行项目</td>
+        <td>带分层模块的应用</td>
+        <td>带分层的可执行目标</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>如何给仓库分类</h2>
+
+<p>按顺序问三个问题，遇到第一个「是」就停下。</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>问题</th><th>如果是</th></tr></thead>
+    <tbody>
+      <tr><td>它包含用例与业务规则吗？</td><td>应用</td></tr>
+      <tr><td>它只包含依赖声明吗？</td><td>装配</td></tr>
+      <tr><td>它能否用一句含单一职责的话说明？</td><td>原子</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  如果三个都是「否」，这个仓库还没有准备好存在。这不是审美判断，而是边界尚未找到的信号。
+</p>
+
+<h2>为什么是三种，而不是更多</h2>
+
+<p>
+  形态越多，可以藏身的地方越多。第四种原型——「共享工具」「common」「core」——总会变成无关
+  之物堆积的地方，直到谁也没法删除任何东西。
+</p>
+
+<p>
+  三种形态还给出了关于泄漏的机械规则：本属于原子却住在应用里的代码，最终会被复制到另一个
+  应用。分类让这件事在评审中可见，因为评审只问一个问题：<em>这个文件属于这个形态吗？</em>
+</p>
+
+<Note label="反模式" variant="warn">
+  <p>
+    名为 <code>utils</code>、<code>shared</code> 或 <code>core</code> 却承担多项职责的仓库。
+    它不是装配（有逻辑），也不是原子（做了几件事）。这正是 OTAKU 要消除的形态。
+  </p>
+</Note>
+
+<h2>强制</h2>
+
+<p>
+  只活在文档里的分类只是建议。要强制它，把形态放进机器可读的元数据，并在 CI 中校验：
+</p>
+
+<ul>
+  <li><strong>PHP：</strong><code>composer.json</code> 的 <code>type</code> 必须是 <code>library</code>、<code>metapackage</code> 或 <code>project</code>。</li>
+  <li><strong>C#：</strong>装配不得包含 <code>.cs</code> 文件。</li>
+  <li><strong>Java：</strong>装配模块的 <code>src/main/java</code> 必须为空。</li>
+  <li><strong>C++：</strong>装配只有头文件或不存在；<code>conanfile</code> 只声明 <code>requires</code>，没有 <code>sources()</code>。</li>
+</ul>
+
+<p>
+  对应用形态，校验是结构性的：确保领域层不导入基础设施、框架或数据库。每个生态都有工具——
+  <code>deptrac</code>（PHP）、<code>NetArchTest</code>（C#）、<code>ArchUnit</code>（Java）、
+  CMake 目标规则（C++）。
+</p>
+
+<p><a href="/zh/guide/">继续阅读指南 →</a></p>

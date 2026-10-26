@@ -93,7 +93,7 @@ export const labels: Record<Locale, Labels> = {
     previousRule: '上一条', nextRule: '下一条', ruleNav: '规则导航',
     allRules: '四十条规则',
     sections: { concept: '概念', problem: '问题', solution: '解决方案', check: '如何检查', pillar: '支柱' },
-    pillars: { O: '自律', T: '组合的工具', A: '装甲核心', K: '让基础设施沉默', U: '通用语言与契约' },
+    pillars: { O: '自律', T: '组合的工具', A: '装甲核心', K: '让基础设施沉默', U: '统一语言与契约' },
     lang: { php: 'PHP', ts: 'TypeScript', cs: 'C#', java: 'Java', cpp: 'C++', text: '结构', yaml: 'YAML', bash: 'Shell' },
   },
   fr: {

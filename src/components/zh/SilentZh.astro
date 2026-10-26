@@ -1,0 +1,122 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const phpPort = String.raw`namespace App\Domain\Account;
+
+interface Accounts
+{
+    public function get(AccountId $id): Account;
+
+    public function save(Account ...$accounts): void;
+}`;
+
+const tsValue = String.raw`export class Email {
+  private constructor(private readonly value: string) {}
+
+  static fromString(value: string): Email {
+    if (!value.includes('@')) {
+      throw new Error('邮箱地址无效');
+    }
+
+    return new Email(value);
+  }
+
+  equals(other: Email): boolean {
+    return other.value === this.value;
+  }
+}`;
+---
+
+<p class="lede">
+  数据库是多数系统里最昂贵的细节，也是最无趣的。沉默意味着可以在不知道哪个引擎、哪个 ORM、
+  是否有事务打开的情况下推理领域。
+</p>
+
+<h2>仓库就是集合</h2>
+
+<p>
+  这个词是字面意思。仓库像内存中的聚合集合：取一个、加一个、保存你手上的。没有查询构建器，
+  没有 SQL 片段，没有跨越边界的懒加载代理。
+</p>
+
+<CodeTabs
+  title="端口"
+  tabs={[{ label: 'PHP', lang: 'php', code: phpPort }]}
+/>
+
+<p>
+  端口里没有 <code>findByEmailLikedSince</code>。查询对象服务于报表；仓库满足用例对聚合的需要。
+</p>
+
+<h2>朴素对象</h2>
+
+<p>
+  实体是 POPO、POCO、POJO——变的只有缩写。按标识相等、状态私有、行为公开，对象不知道自己
+  被持久化。
+</p>
+
+<CodeTabs
+  title="不可变的值"
+  tabs={[{ label: 'TypeScript', lang: 'ts', code: tsValue }]}
+/>
+
+<Note label="经验法则" variant="rule">
+  <p>
+    领域文件里出现注解、特性、基类或序列化提示，说明基础设施在说话。把它移到映射类里。
+  </p>
+</Note>
+
+<h2>映射属于边界</h2>
+
+<p>
+  两个模型，两件工作。领域模型守护不变量，持久化模型守护 schema。它们起初往往相同，也必须
+  允许分叉——映射类就是允许这种分叉存在的地方。
+</p>
+
+<p>
+  在 C# 与 EF Core 里是 <code>DbContext</code> 的配置类；Java 与 JPA 里是 mapper 或独立实体；
+  C++ 手写存储里是映射函数；PHP 与 Doctrine 里是 XML/YAML 映射，或领域命名空间之外的特性。
+</p>
+
+<h2>事务是基础设施</h2>
+
+<p>
+  用例说「把这两个账户一起保存」；它变成 <code>BEGIN/COMMIT</code>、unit of work 还是 saga，
+  是适配器的决定。如果领域调用 <code>beginTransaction()</code>，数据库就成了业务规则的一部分。
+</p>
+
+<h2>内存实现</h2>
+
+<p>
+  第一天就写它。这是端口诚实、用例不依赖基础设施的最便宜证明。
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>语言</th><th>持久化细节</th><th>归属</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td>Doctrine EntityManager、PDO</td><td><code>Infrastructure/</code></td></tr>
+      <tr><td>C#</td><td>DbContext、Dapper、EF 迁移</td><td>适配器项目</td></tr>
+      <tr><td>Java</td><td>JPA EntityManager、JDBC</td><td><code>infrastructure</code> 模块</td></tr>
+      <tr><td>C++</td><td>SQL 客户端、连接池</td><td>适配器的编译单元</td></tr>
+      <tr><td>TypeScript</td><td>Prisma、TypeORM、SQL 驱动</td><td><code>infrastructure</code> 包</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>沉默买到了什么</h2>
+
+<ul>
+  <li>毫秒级的单元测试，不需要数据库容器。</li>
+  <li>不碰领域就能更换引擎。</li>
+  <li>有意义的错误：<code>InsufficientFunds</code>，而不是 <code>SQLSTATE[23000]</code>。</li>
+  <li>没看过 schema 的人也能读懂的领域。</li>
+</ul>
+
+<Note label="常见反对" variant="warn">
+  <p>
+    「两个模型是重复。」这种重复，和安全带带来的摩擦是同一类。当 schema 需要一列领域本不该
+    知道的字段时，这份重复就回本了。
+  </p>
+</Note>
