@@ -4,10 +4,10 @@ import { activeLocales } from './ui';
 export function localePaths() {
   return activeLocales
     .filter((code) => code !== 'en')
-    .map((code) => ({ params: { lang: code } }));
+    .map((code) => ({ params: { lang: code }, props: { lang: code } }));
 }
 
-/** Chapters are still Portuguese-only under /[lang]; Spanish has explicit pages. */
+/** Portuguese chapters live under /[lang]; the other locales use explicit pages. */
 export function ptPaths() {
   return [{ params: { lang: 'pt-br' } }];
 }
