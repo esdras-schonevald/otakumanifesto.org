@@ -1,0 +1,82 @@
+---
+import Doc from '../../../layouts/Doc.astro';
+import Note from '../../../components/Note.astro';
+import { localePaths } from '../../../i18n/routes';
+
+export function getStaticPaths() {
+  return localePaths();
+}
+---
+
+<Doc
+  title="Como aplicar"
+  kicker="Capítulo 03 — o guia"
+  description="Guia prático para aplicar o OTAKU em código orientado a objetos: disciplina, composição, núcleo protegido, infraestrutura silenciosa e contratos."
+  path="/guide"
+  locale="pt-br"
+>
+  <p class="lede">
+    O manifesto diz o que é obrigatório. Este guia mostra como isso aparece no código —
+    uma regra por vez, com a violação primeiro, porque as pessoas reconhecem o próprio
+    código mais rápido no exemplo errado.
+  </p>
+
+  <h2>O método</h2>
+
+  <ol>
+    <li><strong>Leia a regra.</strong> É uma frase e não é negociável.</li>
+    <li><strong>Encontre a violação.</strong> Olhe o menor exemplo que a quebra.</li>
+    <li><strong>Aplique a menor correção.</strong> Não um redesign — a menor mudança que satisfaz a regra.</li>
+    <li><strong>Torne a regressão impossível.</strong> Um linter, um teste de arquitetura, um checklist de revisão.</li>
+  </ol>
+
+  <p>
+    Toda lição termina com um passo de verificação. Uma regra que só vive em um
+    documento é uma preferência; uma regra que quebra o build é uma restrição.
+  </p>
+
+  <h2>Trilhas</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Trilha</th><th>Pilar</th><th>O que você aprende</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><a href="/pt-br/guide/rules/">Disciplina</a></td><td>O</td><td>As quarenta regras mensuráveis, com propósito, conceito, problema e solução.</td></tr>
+        <tr><td><a href="/pt-br/guide/composition/">Composição</a></td><td>T</td><td>Partes pequenas, entradas e saídas explícitas, a aplicação como data pipe.</td></tr>
+        <tr><td><a href="/pt-br/guide/protect-the-core/">Blindagem</a></td><td>A</td><td>Direção das dependências, portas e adaptadores, testes de arquitetura.</td></tr>
+        <tr><td><a href="/pt-br/guide/silent-infrastructure/">Silêncio</a></td><td>K</td><td>Repositórios, objetos simples e o banco como detalhe.</td></tr>
+        <tr><td><a href="/pt-br/guide/contracts/">Contratos</a></td><td>U</td><td>Linguagem ubíqua, design-first e o que um contrato realmente promete.</td></tr>
+        <tr><td><a href="/pt-br/guide/checklist/">Auditoria</a></td><td>—</td><td>Um checklist de revisão para rodar contra um repositório real em uma hora.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Sobre os exemplos de código</h2>
+
+  <p>
+    Os exemplos trazem abas por linguagem — PHP, TypeScript e, quando a regra é
+    estrutural, C#, Java e C++ — sempre em pares <strong>Errado</strong> e
+    <strong>Certo</strong>. O realce de sintaxe é gerado em tempo de build (Shiki, tema
+    do VS Code); o site não envia JavaScript de cliente.
+  </p>
+
+  <h2>Linguagens cobertas</h2>
+
+  <p>
+    PHP, C#, Java, C++ e TypeScript compartilham o vocabulário orientado a objetos de que
+    esta filosofia precisa: classes, interfaces, exceções, generics (ou sua aproximação)
+    e um gerenciador de pacotes. O ferramental muda, e o
+    <a href="/pt-br/languages/">capítulo de referência</a> lista a ferramenta exata para
+    cada passo de verificação.
+  </p>
+
+  <Note label="Antes de começar" variant="warn">
+    <p>
+      Não aplique as quarenta regras a uma base existente em uma semana. Escolha um
+      módulo, aplique ali e deixe o diff ser o argumento. O OTAKU se espalha por exemplo,
+      não por decreto.
+    </p>
+  </Note>
+</Doc>

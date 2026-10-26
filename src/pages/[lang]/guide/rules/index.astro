@@ -1,0 +1,54 @@
+---
+import Doc from '../../../../layouts/Doc.astro';
+import { groups } from '../../../../data/ruleGroups';
+import { rulesOfGroup } from '../../../../data/rulesIndex';
+import type { Locale } from '../../../../data/ruleGroups';
+
+export function getStaticPaths() {
+  return [{ params: { lang: 'pt-br' }, props: { lang: 'pt-br' as Locale } }];
+}
+
+const { lang } = Astro.props as { lang: Locale };
+---
+
+<Doc
+  title="As quarenta regras"
+  kicker="Trilha O — Domine sua Disciplina"
+  description="As 40 regras mensuráveis do OTAKU, agrupadas por pilar, com os limites e a métrica principal."
+  path="/guide/rules"
+  locale={lang}
+>
+  <p class="lede">
+    Quarenta regras, cada uma com um limite. São mecânicas por um motivo: uma regra
+    que depende de gosto não pode ser revisada, automatizada ou discutida.
+  </p>
+
+  <p>
+    <strong>Complexidade ciclomática ≤ 5 por método</strong> é a métrica principal. Ela
+    conta os caminhos independentes que o leitor precisa sustentar ao mesmo tempo: cada
+    ramo, laço e operador booleano soma um. O resto da disciplina existe para manter
+    esse número baixo. Cada regra abaixo tem sua própria página com propósito,
+    conceito, problema e solução.
+  </p>
+
+  {groups.map((group) => (
+    <section>
+      <h2>{group.pillar} — {group.title['pt-br']}</h2>
+      <ul class="rules-index">
+        {rulesOfGroup(group.id).map((rule) => (
+          <li>
+            <a href={`/pt-br/guide/rules/${rule.slug}/`}>
+              <span class="n">{String(rule.id).padStart(2, '0')}</span>
+              <span>{rule.title['pt-br']}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+
+  <p>
+    Em caso de dúvida, escolha a opção mais restritiva. É o critério de desempate que a
+    filosofia prescreve.
+  </p>
+</Doc>

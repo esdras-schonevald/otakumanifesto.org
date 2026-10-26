@@ -1,0 +1,87 @@
+---
+import Doc from '../layouts/Doc.astro';
+import WrongRight from '../components/WrongRight.astro';
+import Note from '../components/Note.astro';
+import { groups } from '../data/ruleGroups';
+import { neighbourRule } from '../data/rulesIndex';
+import { rules } from '../data/rules';
+import { labels } from '../i18n/labels';
+import type { Locale } from '../data/ruleGroups';
+import type { RuleContent, Lang } from '../data/rulesContent1';
+
+interface Props {
+  rule: RuleContent;
+  locale: Locale;
+}
+
+const { rule, locale } = Astro.props;
+const t = labels[locale];
+const { previous, next } = neighbourRule(rule.id);
+const group = groups.find((item) => item.ids.includes(rule.id));
+
+const toTabs = (set: Partial<Record<Lang, string>>) =>
+  Object.entries(set).map(([lang, code]) => ({
+    label: t.lang[lang as Lang] ?? lang,
+    lang: lang as Lang,
+    code: code as string,
+  }));
+
+const base = locale === 'en' ? '' : `/${locale}`;
+---
+
+<Doc
+  title={rule.title[locale] ?? rule.title.en}
+  kicker={`${t.rule} ${String(rule.id).padStart(2, '0')} · ${group?.title[locale] ?? ''}`}
+  description={rule.purpose[locale] ?? rule.purpose.en}
+  path={`/guide/rules/${rule.slug}`}
+  locale={locale}
+  translated
+  pager={false}
+>
+  <p class="lede">{rule.purpose[locale] ?? rule.purpose.en}</p>
+
+  <div class="rule-statement">
+    <span class="rule-statement__label">{t.theRule}</span>
+    <p>{rules.find((item) => item.id === rule.id)?.text[locale]}</p>
+  </div>
+
+  <h2>{t.sections.concept}</h2>
+  <p>{rule.concept[locale] ?? rule.concept.en}</p>
+
+  <h2>{t.sections.problem}</h2>
+  <p>{rule.problem[locale] ?? rule.problem.en}</p>
+
+  <h2>{t.sections.solution}</h2>
+  <p>{rule.solution[locale] ?? rule.solution.en}</p>
+
+  <WrongRight
+    wrong={toTabs(rule.wrong)}
+    right={toTabs(rule.right)}
+    wrongLabel={t.wrong}
+    rightLabel={t.right}
+  />
+
+  <h2>{t.sections.check}</h2>
+  <p>{rule.check[locale] ?? rule.check.en}</p>
+
+  <Note label={t.sections.pillar} variant="rule">
+    <p>
+      <strong>{group?.pillar}</strong> — {t.pillars[group?.pillar ?? 'O']}
+    </p>
+  </Note>
+
+  <nav class="pager" aria-label={t.ruleNav}>
+    {previous ? (
+      <a href={`${base}/guide/rules/${previous.slug}/`}>
+        <span>{t.previousRule}</span>
+        {previous.title[locale] ?? previous.title.en}
+      </a>
+    ) : <span />}
+    {next ? (
+      <a class="next" href={`${base}/guide/rules/${next.slug}/`}>
+        <span>{t.nextRule}</span>
+        {next.title[locale] ?? next.title.en}
+      </a>
+    ) : null}
+  </nav>
+</Doc>

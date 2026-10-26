@@ -1,0 +1,166 @@
+---
+import Doc from '../../layouts/Doc.astro';
+import Note from '../../components/Note.astro';
+import { localePaths } from '../../i18n/routes';
+
+export function getStaticPaths() {
+  return localePaths();
+}
+---
+
+<Doc
+  title="As três formas"
+  kicker="Capítulo 02 — a taxonomia"
+  description="Todo repositório é um átomo, um assembly ou uma aplicação. A taxonomia é imposta na origem, em qualquer ecossistema."
+  path="/shapes"
+  locale="pt-br"
+>
+  <p class="lede">
+    Modularidade não é revisada depois do fato — é imposta pela forma do repositório.
+    Todo repositório precisa caber exatamente em um dos três arquétipos. Não existe
+    quarta opção e não existe híbrido.
+  </p>
+
+  <h2>1 — Átomo</h2>
+
+  <p>
+    A menor unidade de granularidade possível. Se um componente pode ser dividido mais,
+    ele não é um átomo.
+  </p>
+
+  <ul>
+    <li><strong>Estrutura:</strong> plana. Um único nível de diretório dentro da raiz do código.</li>
+    <li><strong>Regra:</strong> sem subdivisões. Ele cumpre um contrato específico.</li>
+    <li><strong>Teste:</strong> você consegue descrevê-lo em uma frase sem “e”?</li>
+    <li><strong>Exemplos:</strong> um value object, um utilitário de string, um cliente HTTP único.</li>
+  </ul>
+
+  <h2>2 — Assembly</h2>
+
+  <p>
+    Um ponto de conexão. Assemblies não contêm lógica; orquestram a união de átomos para
+    que uma única declaração de dependência instale dez pacotes.
+  </p>
+
+  <ul>
+    <li><strong>Estrutura:</strong> sem código-fonte. A composição é declarada no manifesto do pacote.</li>
+    <li><strong>Regra:</strong> se tem comportamento, não é assembly.</li>
+    <li><strong>Teste:</strong> apague o manifesto e sobram apenas um README?</li>
+    <li><strong>Exemplos:</strong> um meta-pacote que agrupa os átomos de HTTP, um bundle “commons”.</li>
+  </ul>
+
+  <h2>3 — Aplicação</h2>
+
+  <p>
+    O sistema vivo. Não é biblioteca, é a implementação do coração do negócio, seguindo
+    Clean Architecture e DDD.
+  </p>
+
+  <ul>
+    <li><strong>Estrutura:</strong> domínio, aplicação, infraestrutura, interface — dependências apontando para dentro.</li>
+    <li><strong>Regra:</strong> mantenha enxuta. Tudo que é genérico desce para átomos.</li>
+    <li><strong>Teste:</strong> contém um caso de uso que um especialista de negócio reconheceria?</li>
+    <li><strong>Exemplos:</strong> um gateway de pagamento, um serviço de identidade.</li>
+  </ul>
+
+  <h2>A mesma ideia em quatro ecossistemas</h2>
+
+  <p>Os nomes dos artefatos mudam; as formas não.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Forma</th><th>PHP / Composer</th><th>C# / NuGet</th><th>Java / Maven</th><th>C++ / Conan</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Átomo</strong></td>
+          <td><code>type: library</code>, um namespace</td>
+          <td>class library, um namespace</td>
+          <td>jar, um pacote</td>
+          <td>header + library, um namespace</td>
+        </tr>
+        <tr>
+          <td><strong>Assembly</strong></td>
+          <td><code>type: metapackage</code>, só <code>require</code></td>
+          <td>pacote sem código, só <code>PackageReference</code></td>
+          <td>pom só com <code>&lt;dependency&gt;</code></td>
+          <td>conanfile que só <code>requires</code></td>
+        </tr>
+        <tr>
+          <td><strong>Aplicação</strong></td>
+          <td><code>type: project</code>, <code>src/Domain</code>, <code>src/Application</code>…</td>
+          <td>projeto executável com camadas</td>
+          <td>app com módulos de camada</td>
+          <td>target executável com camadas</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Como classificar um repositório</h2>
+
+  <p>Faça as três perguntas em ordem e pare no primeiro “sim”.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Pergunta</th><th>Se sim</th></tr></thead>
+      <tbody>
+        <tr><td>Contém casos de uso e regras de negócio?</td><td>Aplicação</td></tr>
+        <tr><td>Contém apenas declarações de dependências?</td><td>Assembly</td></tr>
+        <tr><td>Cabe em uma frase com uma responsabilidade?</td><td>Átomo</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    Se nenhuma resposta for “sim”, o repositório ainda não está pronto para existir. Não
+    é um julgamento estético: é o sinal de que a fronteira ainda não foi encontrada.
+  </p>
+
+  <h2>Por que três, e não mais</h2>
+
+  <p>
+    Mais formas significam mais lugares para se esconder. Um quarto arquétipo —
+    “utilitários compartilhados”, “common”, “core” — sempre se torna o lugar onde coisas
+    sem relação se acumulam até ninguém conseguir apagar nada.
+  </p>
+
+  <p>
+    Três formas também dão uma regra mecânica para vazamentos: código que pertence a um
+    átomo mas vive numa aplicação acaba copiado para outra aplicação. A taxonomia torna
+    isso visível na revisão, porque o revisor faz uma única pergunta: <em>este arquivo
+    pertence a esta forma?</em>
+  </p>
+
+  <Note label="Anti-padrão" variant="warn">
+    <p>
+      Um repositório chamado <code>utils</code>, <code>shared</code> ou <code>core</code>
+      com mais de uma responsabilidade. Não é assembly (tem lógica) nem átomo (faz várias
+      coisas). É a forma que o OTAKU remove.
+    </p>
+  </Note>
+
+  <h2>Imposição</h2>
+
+  <p>
+    Uma taxonomia que vive em um documento é uma sugestão. Para impô-la, coloque a forma
+    em metadados legíveis por máquina e verifique no CI:
+  </p>
+
+  <ul>
+    <li><strong>PHP:</strong> <code>composer.json</code> → <code>type</code> deve ser <code>library</code>, <code>metapackage</code> ou <code>project</code>.</li>
+    <li><strong>C#:</strong> um assembly não pode ter arquivos <code>.cs</code>.</li>
+    <li><strong>Java:</strong> um módulo assembly deve ter <code>src/main/java</code> vazio.</li>
+    <li><strong>C++:</strong> um assembly é headers-only ou ausente; o <code>conanfile</code> declara <code>requires</code> e nenhum <code>sources()</code>.</li>
+  </ul>
+
+  <p>
+    Para a forma de aplicação, a verificação é estrutural: garanta que a camada de
+    domínio não importa infraestrutura, framework ou banco. Todo ecossistema tem uma
+    ferramenta para isso — <code>deptrac</code> (PHP), <code>NetArchTest</code> (C#),
+    <code>ArchUnit</code> (Java), regras de target no CMake (C++).
+  </p>
+
+  <p><a href="/pt-br/guide/">Continuar para o guia →</a></p>
+</Doc>

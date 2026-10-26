@@ -1,0 +1,31 @@
+---
+import CodeTabs from './CodeTabs.astro';
+import type { Lang } from '../data/ruleContent';
+
+interface Side {
+  label: string;
+  lang: Lang;
+  code: string;
+}
+
+interface Props {
+  wrong: Side[];
+  right: Side[];
+  wrongLabel?: string;
+  rightLabel?: string;
+}
+
+const { wrong, right, wrongLabel = 'Wrong', rightLabel = 'Right' } = Astro.props;
+---
+
+<div class="example">
+  <div class="example__side example__side--wrong">
+    <p class="example__label"><span aria-hidden="true">✗</span> {wrongLabel}</p>
+    <CodeTabs tabs={wrong} title={wrongLabel} />
+  </div>
+
+  <div class="example__side example__side--right">
+    <p class="example__label"><span aria-hidden="true">✓</span> {rightLabel}</p>
+    <CodeTabs tabs={right} title={rightLabel} />
+  </div>
+</div>

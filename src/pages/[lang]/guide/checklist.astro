@@ -1,0 +1,142 @@
+---
+import Doc from '../../../layouts/Doc.astro';
+import Note from '../../../components/Note.astro';
+import { localePaths } from '../../../i18n/routes';
+
+export function getStaticPaths() {
+  return localePaths();
+}
+---
+
+<Doc
+  title="Checklist de auditoria"
+  kicker="Trilha — verificar"
+  description="Uma auditoria de uma hora contra as 40 regras do OTAKU: complexidade ciclomática, tamanho, nomes, composição, proteção, silêncio e contratos."
+  path="/guide/checklist"
+  locale="pt-br"
+>
+  <p class="lede">
+    Filosofia que não pode ser verificada é decoração. Esta é a auditoria que eu rodo
+    contra um repositório real — uma hora, sem reescrever nada, só evidência.
+  </p>
+
+  <h2>Antes de começar</h2>
+
+  <ol>
+    <li>Abra o repositório no branch padrão, com o CI verde ou vermelho conhecido.</li>
+    <li>Rode a ferramenta de complexidade e exporte a lista de métodos acima de 5.</li>
+    <li>Gere o grafo de dependências (<code>deptrac</code>, <code>ArchUnit</code>, <code>jdeps</code>, <code>cmake --graphviz</code>).</li>
+    <li>Limite o tempo de cada seção. Você está coletando evidência, não corrigindo.</li>
+  </ol>
+
+  <h2>O — Disciplina (regras 1–17)</h2>
+
+  <ul class="checklist">
+    <li><strong>Complexidade:</strong> nenhum método acima de 5.</li>
+    <li>Nenhum método com dois níveis de indentação.</li>
+    <li><code>else</code> não aparece (busque e justifique cada ocorrência).</li>
+    <li><code>switch</code>/<code>case</code> não aparece.</li>
+    <li>Sem números ou strings mágicos.</li>
+    <li>Nenhuma classe acima de 50 linhas; nenhum método acima de 20; nenhum pacote acima de 10 classes.</li>
+    <li>Nenhuma classe com mais de duas variáveis de instância.</li>
+    <li>Nenhum método ou construtor com mais de dois parâmetros.</li>
+    <li>Nenhuma interface com mais de dois métodos.</li>
+    <li>Sem abreviações em nomes públicos.</li>
+    <li>Booleanos começam com <code>is</code>/<code>has</code>/<code>can</code>/<code>should</code>; métodos começam com verbo.</li>
+    <li>Constantes em <code>UPPER_SNAKE_CASE</code>; propriedades e métodos em <code>camelCase</code>.</li>
+  </ul>
+
+  <h2>T — Composição (regras 18–24)</h2>
+
+  <ul class="checklist">
+    <li>Toda coleção é uma classe própria.</li>
+    <li>Nenhuma cadeia de chamadas com mais de um ponto, exceto builders.</li>
+    <li>Nenhum método estático, exceto fábricas e funções puras.</li>
+    <li>Comandos e consultas separados; métodos que retornam valor não têm efeito colateral.</li>
+    <li>Sem estado global ou singletons; dependências chegam pelo construtor.</li>
+    <li>Casos de uso são classes com um método público.</li>
+    <li>O wiring acontece em uma única raiz de composição.</li>
+    <li>O grafo de dependências não tem ciclos.</li>
+  </ul>
+
+  <h2>A — Blindagem (regras 25–31)</h2>
+
+  <ul class="checklist">
+    <li>Sem getters, setters ou propriedades públicas mutáveis.</li>
+    <li>Propriedades privadas; <code>protected</code> só para herança de framework.</li>
+    <li>Classes <code>final</code> ou <code>sealed</code> por padrão.</li>
+    <li>Sem herança, exceto classes base de framework.</li>
+    <li>Entradas validadas em construtores e métodos públicos.</li>
+    <li>Pré-condições falham rápido, com exceção de domínio.</li>
+    <li>Parâmetros de entrada nunca são mutados.</li>
+    <li>Nenhum arquivo de domínio importa framework, ORM, HTTP ou banco.</li>
+    <li>Um teste de arquitetura impõe a regra de camadas no CI.</li>
+  </ul>
+
+  <h2>K — Silêncio (regras 32–36)</h2>
+
+  <ul class="checklist">
+    <li>Propriedades imutáveis; métodos devolvem novas instâncias.</li>
+    <li>Métodos que retornam coleções devolvem coleção vazia, nunca <code>null</code>.</li>
+    <li>Falha é explícita — Result/Either ou exceção — nunca <code>null</code>.</li>
+    <li>Sem dependências ocultas, métodos mágicos ou conversões implícitas.</li>
+    <li>Sem SQL, HTTP ou caminhos de arquivo no domínio.</li>
+    <li>Repositórios se comportam como coleções; existe implementação em memória.</li>
+    <li>Transações são abertas pela infraestrutura, não pelo domínio.</li>
+  </ul>
+
+  <h2>U — Contratos (regras 37–40)</h2>
+
+  <ul class="checklist">
+    <li>Primitivos e strings com significado são value objects.</li>
+    <li>Sem <code>mixed</code>/<code>array</code>/<code>object</code> fora de serialização explícita.</li>
+    <li>Todo método público está declarado em uma interface.</li>
+    <li>Comentários explicam o porquê e vivem nos contratos.</li>
+    <li>Existe contrato publicado (OpenAPI/IDL), versionado e alinhado ao vocabulário.</li>
+    <li>Mudanças que quebram são detectadas no CI (diff de spec).</li>
+    <li>Nenhum cliente acessa o banco ou um endpoint interno diretamente.</li>
+  </ul>
+
+  <h2>Pontuação</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Nota</th><th>Veredito</th><th>Ação</th></tr></thead>
+      <tbody>
+        <tr><td>90–100%</td><td>Conforme</td><td>Mantenha os checks de CI; reaudite trimestralmente.</td></tr>
+        <tr><td>70–89%</td><td>Quase conforme</td><td>Corrija as seções que falham no próximo sprint; cada falha precisa de dono.</td></tr>
+        <tr><td>40–69%</td><td>Parcial</td><td>Uma seção por sprint. Não comece uma reescrita.</td></tr>
+        <tr><td>&lt; 40%</td><td>Não aplicado</td><td>A base não é OTAKU. Diga isso e decida se migra — honestidade é mais barata que cerimônia.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Ganchos de CI</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Check</th><th>PHP</th><th>C#</th><th>Java</th><th>C++</th><th>TypeScript</th></tr></thead>
+      <tbody>
+        <tr><td>Complexidade ≤ 5</td><td>PHP_CodeSniffer</td><td>CA1502</td><td>PMD</td><td>clang-tidy</td><td>ESLint <code>complexity</code></td></tr>
+        <tr><td>Tamanho e estilo</td><td>PHP_CodeSniffer</td><td>StyleCop</td><td>Checkstyle</td><td>clang-tidy</td><td>ESLint</td></tr>
+        <tr><td>Dependências</td><td>deptrac</td><td>NetArchTest</td><td>ArchUnit</td><td>targets CMake</td><td>ts-arch</td></tr>
+        <tr><td>Contrato</td><td colspan="5">diff de spec + validação de schema em testes de integração</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>O que fazer com o resultado</h2>
+
+  <p>
+    Publique a nota no README, com a data e o commit auditado. Não para expor ninguém —
+    para tornar o progresso visível. Um repositório que vai de 45% para 72% em um
+    trimestre é uma história de sucesso, não de fracasso.
+  </p>
+
+  <Note label="Regra" variant="rule">
+    <p>
+      Todo item que falha precisa nomear um dono e uma data, ou não é um achado — é uma
+      opinião.
+    </p>
+  </Note>
+</Doc>

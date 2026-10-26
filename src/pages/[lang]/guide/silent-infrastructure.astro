@@ -1,0 +1,176 @@
+---
+import Doc from '../../../layouts/Doc.astro';
+import CodeTabs from '../../../components/CodeTabs.astro';
+import Note from '../../../components/Note.astro';
+import { localePaths } from '../../../i18n/routes';
+
+export function getStaticPaths() {
+  return localePaths();
+}
+
+const phpPort = String.raw`namespace App\Domain\Account;
+
+interface Accounts
+{
+    public function get(AccountId $id): Account;
+
+    public function save(Account ...$accounts): void;
+}`;
+
+const phpAdapter = String.raw`namespace App\Infrastructure\Persistence;
+
+final class DoctrineAccounts implements Accounts
+{
+    public function __construct(private EntityManagerInterface $entityManager) {}
+
+    public function get(AccountId $id): Account
+    {
+        $record = $this->entityManager->find(AccountRecord::class, $id->value());
+
+        return $record === null
+            ? throw new AccountNotFound($id)
+            : $record->toDomain();
+    }
+
+    public function save(Account ...$accounts): void
+    {
+        foreach ($accounts as $account) {
+            $this->entityManager->persist(AccountRecord::fromDomain($account));
+        }
+
+        $this->entityManager->flush();
+    }
+}`;
+
+const tsValue = String.raw`export class Email {
+  private constructor(private readonly value: string) {}
+
+  static fromString(value: string): Email {
+    if (!value.includes('@')) {
+      throw new Error('endereço de email inválido');
+    }
+
+    return new Email(value);
+  }
+
+  equals(other: Email): boolean {
+    return other.value === this.value;
+  }
+}`;
+---
+
+<Doc
+  title="A infraestrutura permanece silenciosa"
+  kicker="Trilha K — Mantenha a Infraestrutura Silenciosa"
+  description="Repositórios como coleções em memória, objetos simples e mapeamento na fronteira. O banco é um detalhe."
+  path="/guide/silent-infrastructure"
+  locale="pt-br"
+>
+  <p class="lede">
+    O banco é o detalhe mais caro da maioria dos sistemas e o menos interessante.
+    Silêncio significa que o domínio pode ser raciocinado sem saber qual engine, qual ORM
+    ou se há uma transação aberta.
+  </p>
+
+  <h2>Um repositório é uma coleção</h2>
+
+  <p>
+    A palavra é literal. Um repositório se comporta como uma coleção de agregados em
+    memória: você pega um, adiciona um, salva o que tem. Sem query builder, sem fragmento
+    de SQL, sem proxy de lazy loading atravessando a fronteira.
+  </p>
+
+  <CodeTabs
+    title="Porta e adaptador"
+    tabs={[
+      { label: 'Porta', lang: 'php', code: phpPort },
+      { label: 'Adaptador', lang: 'php', code: phpAdapter },
+    ]}
+  />
+
+  <p>
+    A porta não tem <code>findByEmailLikedSince</code>. Objetos de consulta existem para
+    relatórios; o repositório atende à necessidade de agregados dos casos de uso.
+  </p>
+
+  <h2>Objetos simples</h2>
+
+  <p>
+    Entidades são POPO, POCO, POJO — o acrônimo é a única coisa que muda. Igualdade por
+    identidade, estado privado, comportamento público, e o objeto não sabe que é
+    persistido.
+  </p>
+
+  <CodeTabs
+    title="Valor imutável"
+    tabs={[{ label: 'TypeScript', lang: 'ts', code: tsValue }]}
+  />
+
+  <Note label="Regra prática" variant="rule">
+    <p>
+      Se um arquivo de domínio contém uma anotação, um atributo, uma classe base ou uma
+      dica de serialização, a infraestrutura está falando. Mova para uma classe de
+      mapeamento.
+    </p>
+  </Note>
+
+  <h2>Mapear pertence à fronteira</h2>
+
+  <p>
+    Dois modelos, dois trabalhos. O modelo de domínio protege invariantes; o de
+    persistência protege um schema. Eles costumam começar idênticos e precisam poder
+    divergir — a classe de mapeamento é onde essa divergência tem permissão de existir.
+  </p>
+
+  <p>
+    Em C# com EF Core, uma classe de configuração de <code>DbContext</code>. Em Java com
+    JPA, um mapper ou uma entidade separada. Em C++ com store manual, uma função de
+    mapeamento. Em PHP com Doctrine, um mapeamento XML/YAML ou atributos fora do
+    namespace de domínio.
+  </p>
+
+  <h2>Transações são infraestrutura</h2>
+
+  <p>
+    Um caso de uso diz “salve estas duas contas juntas”; se isso vira
+    <code>BEGIN/COMMIT</code>, unit of work ou saga é decisão do adaptador. Se o domínio
+    chama <code>beginTransaction()</code>, o banco virou parte das regras de negócio.
+  </p>
+
+  <h2>A implementação em memória</h2>
+
+  <p>
+    Escreva no primeiro dia. É a prova mais barata de que a porta é honesta e o caso de
+    uso está livre de infraestrutura.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Linguagem</th><th>Detalhe de persistência</th><th>Onde pertence</th></tr></thead>
+      <tbody>
+        <tr><td>PHP</td><td>Doctrine EntityManager, PDO</td><td><code>Infrastructure/</code></td></tr>
+        <tr><td>C#</td><td>DbContext, Dapper, migrações EF</td><td>projeto adaptador</td></tr>
+        <tr><td>Java</td><td>JPA EntityManager, JDBC</td><td>módulo <code>infrastructure</code></td></tr>
+        <tr><td>C++</td><td>cliente SQL, pool de conexões</td><td>unidade de tradução do adaptador</td></tr>
+        <tr><td>TypeScript</td><td>Prisma, TypeORM, driver SQL</td><td>pacote <code>infrastructure</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>O que o silêncio compra</h2>
+
+  <ul>
+    <li>Testes unitários em milissegundos, sem container de banco.</li>
+    <li>Capacidade de trocar o engine sem tocar no domínio.</li>
+    <li>Erros que significam algo: <code>InsufficientFunds</code>, não <code>SQLSTATE[23000]</code>.</li>
+    <li>Um domínio que pode ser lido por alguém que nunca viu o schema.</li>
+  </ul>
+
+  <Note label="Objeção comum" variant="warn">
+    <p>
+      “Dois modelos é duplicação.” É duplicação no mesmo sentido em que o cinto de
+      segurança é atrito. No momento em que o schema precisa de uma coluna que o domínio
+      não deveria conhecer, a duplicação se paga.
+    </p>
+  </Note>
+</Doc>

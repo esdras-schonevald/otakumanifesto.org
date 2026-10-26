@@ -39,7 +39,20 @@ export const navGroups: NavGroup[] = [
 ];
 
 /** Paths that exist in every locale. Everything else falls back to English. */
-export const translatedPaths = new Set(['/', '/manifesto']);
+export const translatedPaths = new Set([
+  '/',
+  '/manifesto',
+  '/shapes',
+  '/guide',
+  '/guide/rules',
+  '/guide/composition',
+  '/guide/protect-the-core',
+  '/guide/silent-infrastructure',
+  '/guide/contracts',
+  '/guide/checklist',
+  '/languages',
+  '/about',
+]);
 
 export const flat = navGroups.flatMap((group) => group.items);
 

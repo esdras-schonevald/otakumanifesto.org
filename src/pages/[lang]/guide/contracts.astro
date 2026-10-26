@@ -1,0 +1,178 @@
+---
+import Doc from '../../../layouts/Doc.astro';
+import CodeTabs from '../../../components/CodeTabs.astro';
+import Note from '../../../components/Note.astro';
+import { localePaths } from '../../../i18n/routes';
+
+export function getStaticPaths() {
+  return localePaths();
+}
+
+const openapi = String.raw`openapi: 3.1.0
+info:
+  title: Accounts
+  version: 1.4.0
+paths:
+  /accounts/{id}/withdrawals:
+    post:
+      operationId: withdraw
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, currency]
+              properties:
+                amount: { type: integer, minimum: 1 }
+                currency: { type: string, enum: [BRL, USD] }
+      responses:
+        "201":
+          description: Saque aceito
+        "409":
+          description: Saldo insuficiente`;
+
+const phpContract = String.raw`namespace App\Domain\Account;
+
+final class Withdrawal
+{
+    private function __construct(
+        private AccountId $account,
+        private Money $amount,
+    ) {}
+
+    public static function fromRequest(AccountId $account, Money $amount): self
+    {
+        if ($amount->isNegative()) {
+            throw new InvalidWithdrawalAmount($amount);
+        }
+
+        return new self($account, $amount);
+    }
+}`;
+---
+
+<Doc
+  title="Contratos e linguagem"
+  kicker="Trilha U — Linguagem Universal e Contratos"
+  description="Linguagem ubíqua, contratos design-first e regras de compatibilidade que tornam a promessa verificável."
+  path="/guide/contracts"
+  locale="pt-br"
+>
+  <p class="lede">
+    Dois sistemas se integram em um contrato, não em uma classe. O contrato é a parte que
+    você não pode mudar de ânimo leve, e a linguagem dentro dele é a parte que o
+    especialista de negócio precisa reconhecer.
+  </p>
+
+  <h2>Linguagem ubíqua</h2>
+
+  <p>
+    Se o especialista diz “liquidação”, o código não diz <code>PaymentResult</code>. Nomes
+    não são cosméticos: um nome errado força uma camada de tradução na cabeça de alguém, e
+    é nessa camada que requisitos se perdem.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Negócio diz</th><th>Código diz</th><th>Por que dói</th></tr></thead>
+      <tbody>
+        <tr><td>liquidação</td><td><code>PaymentResult</code></td><td>Dois nomes para um conceito; relatórios e código discordam</td></tr>
+        <tr><td>chargeback</td><td><code>refund</code></td><td>Ciclos de vida diferentes fundidos em um tipo</td></tr>
+        <tr><td>portador</td><td><code>user</code></td><td>“User” vaza um ator técnico para uma regra financeira</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    O teste é mecânico: leia um caso de uso em voz alta para o especialista. Quando ele
+    interromper para corrigir uma palavra, o código está errado.
+  </p>
+
+  <h2>Design primeiro</h2>
+
+  <p>
+    O contrato é escrito antes da implementação. É o artefato sobre o qual duas equipes
+    podem discordar barato, e o que sobrevive a uma reescrita.
+  </p>
+
+  <CodeTabs
+    title="OpenAPI 3.1 — a promessa"
+    tabs={[{ label: 'openapi.yaml', lang: 'yaml', code: openapi }]}
+  />
+
+  <p>
+    Repare no que o contrato <strong>não</strong> contém: nomes de classe, colunas de
+    banco, anotações de framework. Ele descreve recursos, verbos e modos de falha — o
+    mesmo vocabulário que o negócio usa.
+  </p>
+
+  <h2>O contrato dentro do código</h2>
+
+  <CodeTabs
+    title="A validação pertence ao conceito"
+    tabs={[{ label: 'PHP', lang: 'php', code: phpContract }]}
+  />
+
+  <p>
+    O objeto de requisição não é um saco de DTO. É o menor tipo que representa um saque
+    válido — e o único lugar onde “o valor deve ser positivo” pode morar.
+  </p>
+
+  <h2>Regras de compatibilidade</h2>
+
+  <ul>
+    <li><strong>Apenas aditivo.</strong> Campos opcionais novos e endpoints novos são seguros; renomear e remover quebram.</li>
+    <li><strong>Nunca reutilize um nome de campo</strong> com outro significado. É uma quebra silenciosa.</li>
+    <li><strong>Versione o contrato, não a classe.</strong> Versão semântica na API, não em namespace interno.</li>
+    <li><strong>Deprecie antes de apagar.</strong> Anuncie, avise nas respostas, depois remova — nessa ordem.</li>
+    <li><strong>O formato de erro é parte do contrato.</strong> Um <code>409</code> com corpo não documentado é promessa quebrada.</li>
+  </ul>
+
+  <h2>Teste a promessa, não a implementação</h2>
+
+  <p>
+    Testes de contrato validam que a implementação ainda honra o documento: validação de
+    schema nas respostas, testes orientados ao consumidor (Pact) e um passo de CI que
+    compara a spec publicada com a anterior e falha em mudanças que quebram.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Linguagem</th><th>Ferramentas de contrato</th></tr></thead>
+      <tbody>
+        <tr><td>PHP</td><td>validadores OpenAPI, <code>league/openapi-psr7-validator</code>, Pact PHP</td></tr>
+        <tr><td>C#</td><td>NSwag, Microsoft.OpenApi, Pact .NET</td></tr>
+        <tr><td>Java</td><td>springdoc-openapi, Pact JVM</td></tr>
+        <tr><td>C++</td><td>validação de spec em testes de integração, Pact via binding</td></tr>
+        <tr><td>TypeScript</td><td>zod/valibot a partir da spec, Pact JS</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <Note label="A regra" variant="rule">
+    <p>
+      Se o código não lê como o especialista de negócio fala, ou se o contrato é
+      contornado, o sistema está quebrado.
+    </p>
+  </Note>
+
+  <h2>Contornar é a falha padrão</h2>
+
+  <p>
+    Contratos raramente são quebrados por design ruim — são contornados por conveniência:
+    um serviço que lê o banco do outro, um cliente que acessa endpoint interno, um campo
+    “temporário” criado direto em produção. Cada contorno é uma segunda fonte de verdade, e
+    duas fontes de verdade nunca ficam iguais por muito tempo.
+  </p>
+
+  <p>
+    A contramedida é social antes de técnica: o contrato precisa ser a única porta, e a
+    porta precisa ser mais barata de usar do que a parede.
+  </p>
+</Doc>

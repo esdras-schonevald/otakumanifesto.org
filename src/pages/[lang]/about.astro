@@ -1,0 +1,119 @@
+---
+import Doc from '../../layouts/Doc.astro';
+import Note from '../../components/Note.astro';
+import { localePaths } from '../../i18n/routes';
+
+export function getStaticPaths() {
+  return localePaths();
+}
+---
+
+<Doc
+  title="Sobre, licença, contribuição"
+  kicker="Referência"
+  description="Quem mantém o Manifesto OTAKU, por que ele vive fora do PHPRise e como o texto é licenciado."
+  path="/about"
+  locale="pt-br"
+>
+  <p class="lede">
+    A filosofia cresceu além do projeto que a produziu. Este site é onde ela vive agora —
+    independente de linguagem, gerenciador de pacotes ou fornecedor.
+  </p>
+
+  <h2>Por que uma casa separada</h2>
+
+  <p>
+    OTAKU foi escrito dentro do <a href="https://phprise.org">PHPRise</a>, uma fundação
+    de PHP. Essa origem foi um acidente da primeira implementação, não uma propriedade da
+    ideia: as regras falam de indentação, coleções, direção de dependências e contratos,
+    e toda linguagem orientada a objetos consegue expressá-los.
+  </p>
+
+  <p>
+    Manter o manifesto dentro de uma organização PHP cometia dois erros ao mesmo tempo:
+    sugeria que a filosofia exigia PHP, e fazia os repositórios PHP carregarem uma cópia
+    de um documento que não era sobre eles. O PHPRise agora aponta para cá em vez de
+    duplicar.
+  </p>
+
+  <h2>Autor</h2>
+
+  <p>
+    Escrito e mantido por <a href="https://esdras.me">Esdras Schönevald</a>, Lead
+    Software Engineer e mantenedor do PHPRise. A filosofia vem de duas décadas
+    construindo sistemas de pagamento, identidade e saúde — e da experiência recorrente
+    de que a parte caro do software nunca é o código que você escreve, mas a estrutura
+    que você mantém.
+  </p>
+
+  <p>
+    As dívidas intelectuais estão listadas no
+    <a href="https://esdras.me/#inspirations">site pessoal</a>: Object Calisthenics (Jeff
+    Bay), Clean Architecture (Robert C. Martin), DDD (Eric Evans), a filosofia Unix,
+    Conway, Parnas e Dijkstra.
+  </p>
+
+  <h2>Licença</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Parte</th><th>Licença</th><th>Você pode</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Texto do manifesto e do guia</td>
+          <td><a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></td>
+          <td>Compartilhar e adaptar, com atribuição e a mesma licença</td>
+        </tr>
+        <tr>
+          <td>Exemplos de código</td>
+          <td>MIT</td>
+          <td>Usar, modificar e vender, com atribuição no código-fonte</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    Atribuição: link para <code>https://otakumanifesto.org</code> e o nome do autor. É o
+    suficiente.
+  </p>
+
+  <h2>Contribuindo</h2>
+
+  <p>
+    O código é público em
+    <a href="https://github.com/esdras-schonevald/otakumanifesto.org">github.com/esdras-schonevald/otakumanifesto.org</a>.
+    O site é um build estático em Astro — sem runtime, sem banco.
+  </p>
+
+  <ul>
+    <li><strong>Correções</strong> (erros de digitação, links quebrados, código errado) — abra uma issue ou PR direto.</li>
+    <li><strong>Novos exemplos</strong> em outra linguagem — bem-vindos, desde que a regra não mude.</li>
+    <li><strong>Mudar uma regra</strong> — abra uma issue primeiro. As regras são difíceis de mudar de propósito; é esse o ponto.</li>
+  </ul>
+
+  <h2>Versionamento</h2>
+
+  <p>
+    A filosofia é versionada por data, não por versão semântica. Uma regra nunca é
+    editada em silêncio: mudanças são anunciadas, discutidas e refletidas no guia com um
+    exemplo do que mudou.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Versão</th><th>Mudança</th></tr></thead>
+      <tbody>
+        <tr><td>2026.10</td><td>Segunda edição: quarenta regras mensuráveis, complexidade ciclomática como métrica principal, TypeScript e traduções.</td></tr>
+        <tr><td>2026.10</td><td>Primeira edição pública fora do PHPRise: cinco pilares, três formas, guia multi-linguagem.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <Note label="Sobre o zelo">
+    <p>
+      Uma filosofia que vira teste de personalidade fracassou. As regras são sobre
+      código, e código pode ser mudado. Discuta com a regra, nunca com a pessoa.
+    </p>
+  </Note>
+</Doc>

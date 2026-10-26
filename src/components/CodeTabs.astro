@@ -1,8 +1,11 @@
 ---
+import { Code } from 'astro:components';
+import type { Lang } from '../data/ruleContent';
+
 interface Tab {
   label: string;
+  lang: Lang;
   code: string;
-  id?: string;
 }
 
 interface Props {
@@ -12,7 +15,6 @@ interface Props {
 
 const { tabs, title } = Astro.props;
 const group = `tabs-${Math.random().toString(36).slice(2, 9)}`;
-
 const keys = tabs.map((_, index) => `${group}-${index}`);
 
 const css = keys
@@ -31,7 +33,7 @@ const css = keys
       name={group}
       id={keys[index]}
       checked={index === 0}
-      aria-label={tab.label}
+      aria-label={`${title ?? 'Code'}: ${tab.label}`}
     />
   ))}
 
@@ -44,7 +46,11 @@ const css = keys
   <div class="tabs__panels">
     {tabs.map((tab, index) => (
       <div class="tabs__panel" data-panel={keys[index]}>
-        <pre><code>{tab.code}</code></pre>
+        <Code
+          code={tab.code}
+          lang={tab.lang}
+          themes={{ light: 'github-light', dark: 'github-dark' }}
+        />
       </div>
     ))}
   </div>

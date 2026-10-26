@@ -1,0 +1,26 @@
+---
+import Doc from '../../layouts/Doc.astro';
+import { localePaths } from '../../i18n/routes';
+
+export function getStaticPaths() {
+  return localePaths();
+}
+---
+
+<Doc
+  title="Página não encontrada"
+  kicker="404"
+  description="Esta página não existe."
+  path="/404"
+  locale="pt-br"
+>
+  <p class="lede">
+    Este caminho nunca foi escrito. O livro tem doze capítulos; o índice conhece todos.
+  </p>
+
+  <ul class="actions">
+    <li><a class="primary" href="/pt-br/">Voltar à capa</a></li>
+    <li><a href="/pt-br/manifesto/">O manifesto</a></li>
+    <li><a href="/pt-br/guide/">O guia</a></li>
+  </ul>
+</Doc>

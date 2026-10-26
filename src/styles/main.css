@@ -692,3 +692,89 @@ th {
   font-family: var(--mono);
   font-size: 0.78em;
 }
+
+
+/* --- examples ------------------------------------------------------------- */
+
+.example { margin: 2rem 0; }
+
+.example__side { margin-bottom: 1.4rem; }
+
+.example__label {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 0.5rem;
+}
+
+.example__side--wrong .example__label { color: #c2410c; }
+.example__side--right .example__label { color: var(--accent); }
+
+.example .tabs { margin: 0; }
+
+.rule-statement {
+  border-left: 3px solid var(--violet);
+  background: var(--panel-2);
+  padding: 0.9rem 1.1rem;
+  border-radius: 4px;
+  margin: 1.4rem 0 2rem;
+}
+
+.rule-statement__label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--violet);
+  margin-bottom: 0.3rem;
+}
+
+.rule-statement p { margin: 0; font-size: 0.95rem; color: var(--ink-soft); }
+
+/* --- syntax highlighting (Shiki, build time) ------------------------------ */
+
+.astro-code {
+  margin: 0;
+  padding: 1rem 1.15rem;
+  overflow-x: auto;
+  font-size: 0.845rem;
+  line-height: 1.6;
+  tab-size: 4;
+}
+
+@media (prefers-color-scheme: dark) {
+  .astro-code {
+    background-color: var(--shiki-dark-bg, var(--code-bg)) !important;
+  }
+  .astro-code span {
+    color: var(--shiki-dark) !important;
+  }
+}
+
+/* --- rules index list ----------------------------------------------------- */
+
+.rules-index { list-style: none; margin: 0.6rem 0 1.8rem; padding: 0; }
+
+.rules-index li {
+  border-bottom: 1px solid var(--line);
+}
+
+.rules-index a {
+  display: flex;
+  gap: 0.9rem;
+  align-items: baseline;
+  padding: 0.55rem 0.2rem;
+  text-decoration: none;
+  color: var(--ink-soft);
+}
+
+.rules-index a:hover { color: var(--accent); }
+
+.rules-index .n {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  min-width: 1.6rem;
+}

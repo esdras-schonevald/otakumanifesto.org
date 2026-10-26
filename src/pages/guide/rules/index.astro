@@ -1,0 +1,45 @@
+---
+import Doc from '../../../layouts/Doc.astro';
+import { groups } from '../../../data/ruleGroups';
+import { rulesOfGroup } from '../../../data/rulesIndex';
+---
+
+<Doc
+  title="The forty rules"
+  kicker="Track O — Own your Discipline"
+  description="The 40 measurable OTAKU rules, grouped by pillar, with the thresholds and the primary metric."
+  path="/guide/rules"
+>
+  <p class="lede">
+    Forty rules, each with a threshold. They are mechanical for a reason: a rule that
+    depends on taste cannot be reviewed, automated or argued with.
+  </p>
+
+  <p>
+    <strong>Cyclomatic complexity ≤ 5 per method</strong> is the primary metric. It
+    counts the independent paths a reader must hold at once: each branch, loop and
+    boolean operator adds one. The rest of the discipline exists to keep that number
+    low. Every rule below has its own page with purpose, concept, problem and solution.
+  </p>
+
+  {groups.map((group) => (
+    <section>
+      <h2>{group.pillar} — {group.title.en}</h2>
+      <ul class="rules-index">
+        {rulesOfGroup(group.id).map((rule) => (
+          <li>
+            <a href={`/guide/rules/${rule.slug}/`}>
+              <span class="n">{String(rule.id).padStart(2, '0')}</span>
+              <span>{rule.title.en}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+
+  <p>
+    When in doubt, choose the more restrictive option. That is the tie-breaker the
+    philosophy prescribes.
+  </p>
+</Doc>

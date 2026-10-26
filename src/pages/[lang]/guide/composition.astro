@@ -1,0 +1,178 @@
+---
+import Doc from '../../../layouts/Doc.astro';
+import CodeTabs from '../../../components/CodeTabs.astro';
+import Note from '../../../components/Note.astro';
+import { localePaths } from '../../../i18n/routes';
+
+export function getStaticPaths() {
+  return localePaths();
+}
+
+const phpPipe = String.raw`final class TransferMoney
+{
+    public function __construct(
+        private Accounts $accounts,
+        private Ledger $ledger,
+    ) {}
+
+    public function __invoke(Transfer $transfer): Receipt
+    {
+        $source = $this->accounts->get($transfer->source());
+        $target = $this->accounts->get($transfer->target());
+
+        $debited = $source->debit($transfer->amount());
+        $credited = $target->credit($transfer->amount());
+
+        $this->accounts->save($debited, $credited);
+
+        return $this->ledger->record($transfer);
+    }
+}`;
+
+const tsPipe = String.raw`class TransferMoney {
+  constructor(
+    private readonly accounts: Accounts,
+    private readonly ledger: Ledger,
+  ) {}
+
+  run(transfer: Transfer): Receipt {
+    const source = this.accounts.get(transfer.source);
+    const target = this.accounts.get(transfer.target);
+
+    const debited = source.debit(transfer.amount);
+    const credited = target.credit(transfer.amount);
+
+    this.accounts.save(debited, credited);
+
+    return this.ledger.record(transfer);
+  }
+}`;
+
+const phpRoot = String.raw`// Composition root — a infraestrutura decide, uma vez.
+$transferMoney = new TransferMoney(
+    new DoctrineAccounts($entityManager),
+    new DoctrineLedger($entityManager),
+);
+
+$receipt = $transferMoney(new Transfer($source, $target, $amount));`;
+---
+
+<Doc
+  title="Composição: partes e tubos"
+  kicker="Trilha T — Ferramentas para Composição"
+  description="Como construir sistemas com partes pequenas e substituíveis, tratar o fluxo como data pipe e manter efeitos colaterais nas bordas."
+  path="/guide/composition"
+  locale="pt-br"
+>
+  <p class="lede">
+    Uma ferramenta Unix faz uma coisa e fala por stdin e stdout. Um componente aqui faz
+    uma coisa e fala por um contrato. Todo o resto — como é invocado, onde roda, quem é
+    dono — é configuração.
+  </p>
+
+  <h2>Uma parte, um trabalho</h2>
+
+  <p>
+    O teste não é “é pequeno?”, mas “consigo descrevê-lo sem <em>e</em>?”. Uma classe que
+    valida uma transferência <em>e</em> a persiste tem dois motivos para mudar e dois
+    modos de falha para testar. Divida no <code>e</code>.
+  </p>
+
+  <p>
+    A substituibilidade vem de graça depois disso. Uma parte com um trabalho tem
+    interface estreita, e uma interface estreita tem poucos chamadores para atualizar.
+  </p>
+
+  <h2>O data pipe</h2>
+
+  <p>
+    A entrada chega por um adaptador (controller HTTP, comando de CLI, consumidor de
+    fila), atravessa o núcleo como dado simples e sai por outro adaptador. O núcleo nunca
+    sabe qual adaptador o chamou.
+  </p>
+
+  <CodeTabs
+    title="Um caso de uso recebe portas, não frameworks"
+    tabs={[
+      { label: 'PHP', lang: 'php', code: phpPipe },
+      { label: 'TypeScript', lang: 'ts', code: tsPipe },
+    ]}
+  />
+
+  <p>
+    Repare no que esta classe não importa: nada de HTTP, ORM ou container. Ela conhece
+    duas portas com nomes de negócio, e nada mais. Esse é o tubo.
+  </p>
+
+  <h2>A composição acontece na borda</h2>
+
+  <p>
+    Alguém precisa decidir qual implementação é real. Essa decisão pertence a uma raiz de
+    composição — um lugar só, normalmente o ponto de entrada, onde a infraestrutura é
+    ligada ao núcleo.
+  </p>
+
+  <CodeTabs
+    title="Raiz de composição"
+    tabs={[{ label: 'PHP', lang: 'php', code: phpRoot }]}
+  />
+
+  <p>
+    Em C# esse lugar é <code>Program.cs</code>; em Java, o módulo ou uma classe de
+    configuração; em C++, <code>main</code>. Um arquivo, não espalhado pelo domínio.
+  </p>
+
+  <Note label="Cheiro" variant="warn">
+    <p>
+      Se uma classe de domínio pede uma dependência ao container, a composição vazou para
+      dentro. <code>$container-&gt;get(...)</code> dentro de um caso de uso é um parâmetro
+      escondido e uma costura impossível de testar.
+    </p>
+  </Note>
+
+  <h2>Partes precisam ser substituíveis, não só pequenas</h2>
+
+  <p>Substituibilidade exige três coisas:</p>
+
+  <ol>
+    <li><strong>Um contrato</strong> que descreve comportamento em termos de domínio.</li>
+    <li><strong>Nenhum tipo vazado</strong> da implementação (nada de <code>QueryBuilder</code> na assinatura).</li>
+    <li><strong>Uma implementação por papel</strong> em produção, e uma em memória nos testes.</li>
+  </ol>
+
+  <p>
+    A implementação em memória é o teste de arquitetura mais barato que você vai
+    escrever: se o caso de uso não roda contra um fake, ele não está composto — está
+    fundido a um framework.
+  </p>
+
+  <h2>Ciclos são o sinal de falha</h2>
+
+  <p>
+    Composição torna as dependências visíveis. Quando o grafo tem um ciclo, duas partes
+    na verdade são uma, ou uma responsabilidade está no lugar errado. Ferramentas que
+    desenham o grafo — <code>deptrac</code>, <code>ArchUnit</code>, <code>jdeps</code>,
+    <code>include-what-you-use</code> — transformam esse sinal em falha de build.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Linguagem</th><th>Mecanismo de composição</th><th>Verificação do grafo</th></tr></thead>
+      <tbody>
+        <tr><td>PHP</td><td>injeção por construtor, container PSR-11 na borda</td><td>deptrac</td></tr>
+        <tr><td>C#</td><td>injeção por construtor, <code>IServiceCollection</code></td><td>NetArchTest</td></tr>
+        <tr><td>Java</td><td>injeção por construtor, wiring manual ou CDI</td><td>ArchUnit, <code>jdeps</code></td></tr>
+        <tr><td>C++</td><td>referências/ponteiros no construtor, wiring no <code>main</code></td><td>grafo de build, IWYU</td></tr>
+        <tr><td>TypeScript</td><td>injeção por construtor, wiring no entrypoint</td><td>ts-arch</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>O que composição não é</h2>
+
+  <p>
+    Não é “extrair uma interface para tudo”. Uma interface com uma implementação e
+    nenhum fake de teste é cerimônia. Composição se justifica por uma segunda
+    implementação — real ou em memória.
+  </p>
+</Doc>

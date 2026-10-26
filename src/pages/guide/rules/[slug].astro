@@ -1,0 +1,15 @@
+---
+import RuleDetail from '../../../components/RuleDetail.astro';
+import { allRules } from '../../../data/rulesIndex';
+
+export function getStaticPaths() {
+  return allRules.map((rule) => ({
+    params: { slug: rule.slug },
+    props: { rule },
+  }));
+}
+
+const { rule } = Astro.props;
+---
+
+<RuleDetail rule={rule} locale="en" />

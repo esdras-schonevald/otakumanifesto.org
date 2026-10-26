@@ -2,7 +2,7 @@
 import '../styles/main.css';
 import SideNav from '../components/SideNav.astro';
 import { neighbour, translatedPaths, flat } from '../data/nav';
-import { ui, localePath, localeNames, htmlLang, locales } from '../i18n/ui';
+import { ui, localePath, localeNames, htmlLang, activeLocales, locales } from '../i18n/ui';
 import type { Locale } from '../data/ruleGroups';
 
 interface Props {
@@ -12,24 +12,25 @@ interface Props {
   path: string;
   locale?: Locale;
   bare?: boolean;
+  translated?: boolean;
+  pager?: boolean;
 }
 
-const { title, kicker, description, path, locale = 'en', bare = false } = Astro.props;
+const { title, kicker, description, path, locale = 'en', bare = false, translated, pager = true } = Astro.props;
 const strings = ui[locale];
 
 const canonical = new URL(localePath(locale, path), Astro.site);
 const fullTitle = path === '/' ? title : `${title} — OTAKU Manifesto`;
 
-const translatedHere = translatedPaths.has(path);
+const translatedHere = translated ?? translatedPaths.has(path);
 const { previous, next } = neighbour(path);
 const current = flat.find((item) => item.path === path);
 
 const hrefFor = (target: string): string =>
   translatedPaths.has(target) ? localePath(locale, target) : target;
 
-const alternates = translatedHere
-  ? locales.map((code) => ({ code, href: localePath(code, path) }))
-  : [{ code: 'en' as Locale, href: path }];
+const offered = translatedHere ? activeLocales : (['en'] as Locale[]);
+const alternates = offered.map((code) => ({ code, href: localePath(code, path) }));
 ---
 
 <!doctype html>
@@ -82,7 +83,7 @@ const alternates = translatedHere
         <details class="lang">
           <summary>{strings.language} · {localeNames[locale]}</summary>
           <ul>
-            {locales.map((code) => (
+            {activeLocales.map((code) => (
               <li>
                 <a
                   href={translatedHere ? localePath(code, path) : localePath(code, '/')}
@@ -115,6 +116,7 @@ const alternates = translatedHere
           <slot />
         </article>
 
+        {pager && (
         <nav class="pager" aria-label="Chapter navigation">
           {previous ? (
             <a href={hrefFor(previous.path)}>
@@ -129,9 +131,10 @@ const alternates = translatedHere
             </a>
           ) : null}
         </nav>
+        )}
 
         <footer class="foot">
-          <span>OTAKU Manifesto · <a href="/about">{strings.license}</a></span>
+          <span>OTAKU Manifesto · <a href={localePath(locale, '/about')}>{strings.license}</a></span>
           <span>
             <a href="https://phprise.org">PHPRise</a> ·
             <a href="https://github.com/esdras-schonevald/otakumanifesto.org">{strings.source}</a> ·

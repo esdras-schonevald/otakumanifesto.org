@@ -1,0 +1,166 @@
+---
+import Doc from '../../../layouts/Doc.astro';
+import CodeTabs from '../../../components/CodeTabs.astro';
+import Note from '../../../components/Note.astro';
+import { localePaths } from '../../../i18n/routes';
+
+export function getStaticPaths() {
+  return localePaths();
+}
+
+const phpEntity = String.raw`namespace App\Domain\Account;
+
+final class Account
+{
+    private function __construct(
+        private AccountId $id,
+        private Money $balance,
+    ) {}
+
+    public function withdraw(Money $amount): self
+    {
+        if ($this->balance->isLessThan($amount)) {
+            throw new InsufficientFunds($this->id);
+        }
+
+        return new self($this->id, $this->balance->subtract($amount));
+    }
+}`;
+
+const phpPorts = String.raw`namespace App\Domain\Account;
+
+interface Accounts
+{
+    public function get(AccountId $id): Account;
+
+    public function save(Account ...$accounts): void;
+}
+
+interface Ledger
+{
+    public function record(Transfer $transfer): Receipt;
+}`;
+
+const tsPorts = String.raw`export interface Accounts {
+  get(id: AccountId): Account;
+  save(...accounts: Account[]): void;
+}
+
+export interface Ledger {
+  record(transfer: Transfer): Receipt;
+}`;
+---
+
+<Doc
+  title="Blindar: proteja o núcleo"
+  kicker="Trilha A — Blinde o Núcleo"
+  description="Direção das dependências, portas e adaptadores, e como manter frameworks fora do domínio."
+  path="/guide/protect-the-core"
+  locale="pt-br"
+>
+  <p class="lede">
+    O domínio é a única parte do sistema que não pode ser substituída. Blindar não é
+    escondê-lo — é garantir que nada mais dite sua forma.
+  </p>
+
+  <h2>A regra de dependência</h2>
+
+  <p>
+    Dependências de código-fonte apontam para dentro. Nada em um círculo interno pode
+    conhecer o nome de algo em um círculo externo: nem uma classe, nem uma anotação, nem
+    uma interface de framework, nem um tipo de banco.
+  </p>
+
+<pre><code>Interface  ──▶  Application  ──▶  Domain
+Infrastructure ──────────────────▶  Domain</code></pre>
+
+  <p>
+    As setas são imports em tempo de compilação. Se <code>Domain/Account.php</code>
+    importa <code>Doctrine\ORM\Mapping\Entity</code>, a seta aponta para o lado errado e
+    o framework passa a ser dono das suas regras de negócio.
+  </p>
+
+  <h2>Portas e adaptadores</h2>
+
+  <p>
+    O domínio declara o que precisa como uma porta. A infraestrutura implementa como um
+    adaptador. O domínio fica com o vocabulário; o adaptador fica com o fornecedor.
+  </p>
+
+  <CodeTabs
+    title="A mesma porta, duas linguagens"
+    tabs={[
+      { label: 'PHP', lang: 'php', code: phpPorts },
+      { label: 'TypeScript', lang: 'ts', code: tsPorts },
+    ]}
+  />
+
+  <p>
+    Em C# e Java a forma é a mesma com <code>interface</code>; em C++, uma classe abstrata
+    com destrutor virtual. O que importa é que o contrato pertence ao domínio e não
+    carrega detalhe nenhum.
+  </p>
+
+  <h2>Uma entidade que não sabe de nada</h2>
+
+  <CodeTabs
+    title="Entidade"
+    tabs={[{ label: 'PHP', lang: 'php', code: phpEntity }]}
+  />
+
+  <p>
+    Sem anotações, sem classe base, sem active record. A entidade pode ser construída em
+    um teste unitário sem banco, sem container e sem subir framework.
+  </p>
+
+  <h2>Os anti-padrões</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Sintoma</th><th>O que significa</th><th>Correção</th></tr></thead>
+      <tbody>
+        <tr><td>Entidade estende classe base do framework</td><td>O framework é dono do ciclo de vida</td><td>Objeto simples + mapeamento no adaptador</td></tr>
+        <tr><td>Domínio importa <code>EntityManager</code>, <code>DbContext</code>, <code>Session</code></td><td>Persistência está no núcleo</td><td>Porta de repositório no domínio</td></tr>
+        <tr><td>Anotações de validação nos campos do domínio</td><td>Regras de transporte viraram regras de negócio</td><td>Validar no caso de uso ou no value object</td></tr>
+        <tr><td>Domínio lança exceções HTTP</td><td>O adaptador vazou para dentro</td><td>Exceções de domínio + mapa na borda</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Transforme a seta em falha de build</h2>
+
+  <p>
+    Uma regra de dependência garantida por revisão decai. Garanta com uma ferramenta que
+    quebra o pipeline:
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Linguagem</th><th>Teste de arquitetura</th></tr></thead>
+      <tbody>
+        <tr><td>PHP</td><td><code>deptrac</code>, regras customizadas de PHPStan</td></tr>
+        <tr><td>C#</td><td><code>NetArchTest</code>, NDepend</td></tr>
+        <tr><td>Java</td><td><code>ArchUnit</code></td></tr>
+        <tr><td>C++</td><td>regras de dependência por target no CMake, <code>include-what-you-use</code></td></tr>
+        <tr><td>TypeScript</td><td><code>ts-arch</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <Note label="Migração" variant="warn">
+    <p>
+      Você não precisa parar o mundo. Extraia o caso de uso primeiro, dê portas a ele,
+      depois mova as chamadas de ORM para adaptadores, uma por vez. O compilador e o teste
+      de arquitetura avisam quando a seta finalmente aponta para dentro.
+    </p>
+  </Note>
+
+  <h2>O que “blindar” não é</h2>
+
+  <p>
+    Não é uma estrutura de quatro pastas com o mesmo modelo copiado quatro vezes. Se a
+    entidade de domínio e a entidade de banco são idênticas, a fronteira é cerimonial —
+    você moveu código, não dependências. O teste é o grafo de imports, não a árvore de
+    diretórios.
+  </p>
+</Doc>

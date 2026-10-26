@@ -2,11 +2,11 @@
 import Doc from '../../layouts/Doc.astro';
 import ManifestoBody from '../../components/ManifestoBody.astro';
 import { manifesto } from '../../i18n/manifesto';
-import { locales } from '../../i18n/ui';
+import { activeLocales } from '../../i18n/ui';
 import type { Locale } from '../../data/ruleGroups';
 
 export function getStaticPaths() {
-  return locales
+  return activeLocales
     .filter((code) => code !== 'en')
     .map((code) => ({ params: { lang: code }, props: { lang: code } }));
 }
