@@ -1,0 +1,139 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const phpPipe = String.raw`final class TransferMoney
+{
+    public function __construct(
+        private Accounts $accounts,
+        private Ledger $ledger,
+    ) {}
+
+    public function __invoke(Transfer $transfer): Receipt
+    {
+        $source = $this->accounts->get($transfer->source());
+        $target = $this->accounts->get($transfer->target());
+
+        $debited = $source->debit($transfer->amount());
+        $credited = $target->credit($transfer->amount());
+
+        $this->accounts->save($debited, $credited);
+
+        return $this->ledger->record($transfer);
+    }
+}`;
+
+const tsPipe = String.raw`class TransferMoney {
+  constructor(
+    private readonly accounts: Accounts,
+    private readonly ledger: Ledger,
+  ) {}
+
+  run(transfer: Transfer): Receipt {
+    const source = this.accounts.get(transfer.source);
+    const target = this.accounts.get(transfer.target);
+
+    this.accounts.save(
+      source.debit(transfer.amount),
+      target.credit(transfer.amount),
+    );
+
+    return this.ledger.record(transfer);
+  }
+}`;
+---
+
+<p class="lede">
+  Un outil Unix fait une chose et parle par stdin et stdout. Un composant ici fait une chose
+  et parle par un contrat. Tout le reste — comment il est invoqué, où il tourne, qui en est
+  propriétaire — est de la configuration.
+</p>
+
+<h2>Une pièce, un travail</h2>
+
+<p>
+  Le test n’est pas « est-ce petit ? », mais « puis-je le décrire sans <em>et</em> ? ». Une
+  classe qui valide un virement <em>et</em> le persiste a deux raisons de changer et deux
+  modes de panne à tester. Coupez au <em>et</em>.
+</p>
+
+<h2>Le data pipe</h2>
+
+<p>
+  L’entrée arrive par un adaptateur (contrôleur HTTP, commande CLI, consommateur de file),
+  traverse le noyau comme des données simples et sort par un autre adaptateur. Le noyau ne
+  sait jamais quel adaptateur l’a appelé.
+</p>
+
+<CodeTabs
+  title="Un cas d’usage reçoit des ports, pas des frameworks"
+  tabs={[
+    { label: 'PHP', lang: 'php', code: phpPipe },
+    { label: 'TypeScript', lang: 'ts', code: tsPipe },
+  ]}
+/>
+
+<p>
+  Remarquez ce que cette classe n’importe pas : ni HTTP, ni ORM, ni conteneur. Elle connaît
+  deux ports nommés d’après le métier, et rien d’autre. C’est le tuyau.
+</p>
+
+<h2>La composition se fait au bord</h2>
+
+<p>
+  Quelqu’un doit décider quelle implémentation est réelle. Cette décision appartient à une
+  racine de composition — un seul endroit, en général le point d’entrée, où l’infrastructure
+  est reliée au noyau.
+</p>
+
+<Note label="Odeur" variant="warn">
+  <p>
+    Si une classe du domaine demande une dépendance au conteneur, la composition a fui vers
+    l’intérieur. <code>$container-&gt;get(...)</code> dans un cas d’usage est un paramètre
+    caché et une couture impossible à tester.
+  </p>
+</Note>
+
+<h2>Les pièces doivent être remplaçables, pas seulement petites</h2>
+
+<ol>
+  <li><strong>Un contrat</strong> qui décrit le comportement en termes de domaine.</li>
+  <li><strong>Aucun type fuité</strong> de l’implémentation (pas de <code>QueryBuilder</code> dans une signature).</li>
+  <li><strong>Une implémentation par rôle</strong> en production, et une en mémoire dans les tests.</li>
+</ol>
+
+<p>
+  L’implémentation en mémoire est le test d’architecture le moins cher que vous écrirez : si
+  le cas d’usage ne tourne pas contre un faux, il n’est pas composé — il est soudé à un
+  framework.
+</p>
+
+<h2>Les cycles sont le signal d’échec</h2>
+
+<p>
+  La composition rend les dépendances visibles. Quand le graphe contient un cycle, deux pièces
+  sont en fait une, ou une responsabilité est au mauvais endroit. Les outils qui dessinent le
+  graphe — <code>deptrac</code>, <code>ArchUnit</code>, <code>jdeps</code>,
+  <code>include-what-you-use</code> — transforment ce signal en échec de build.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Langage</th><th>Mécanisme de composition</th><th>Vérification du graphe</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td>injection par constructeur, conteneur PSR-11 au bord</td><td>deptrac</td></tr>
+      <tr><td>C#</td><td>injection par constructeur, <code>IServiceCollection</code></td><td>NetArchTest</td></tr>
+      <tr><td>Java</td><td>injection par constructeur, câblage manuel ou CDI</td><td>ArchUnit, <code>jdeps</code></td></tr>
+      <tr><td>C++</td><td>références/pointeurs au constructeur, câblage dans <code>main</code></td><td>graphe de build, IWYU</td></tr>
+      <tr><td>TypeScript</td><td>injection par constructeur, câblage au point d’entrée</td><td>ts-arch</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Ce que la composition n’est pas</h2>
+
+<p>
+  Ce n’est pas « extraire une interface pour tout ». Une interface à une seule implémentation
+  et sans faux de test est de la cérémonie. La composition se justifie par une seconde
+  implémentation — réelle ou en mémoire.
+</p>

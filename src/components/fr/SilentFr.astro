@@ -1,0 +1,131 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const phpPort = String.raw`namespace App\Domain\Account;
+
+interface Accounts
+{
+    public function get(AccountId $id): Account;
+
+    public function save(Account ...$accounts): void;
+}`;
+
+const tsValue = String.raw`export class Email {
+  private constructor(private readonly value: string) {}
+
+  static fromString(value: string): Email {
+    if (!value.includes('@')) {
+      throw new Error('adresse e-mail invalide');
+    }
+
+    return new Email(value);
+  }
+
+  equals(other: Email): boolean {
+    return other.value === this.value;
+  }
+}`;
+---
+
+<p class="lede">
+  La base de données est le détail le plus coûteux de la plupart des systèmes et le moins
+  intéressant. Le silence signifie que le domaine peut être raisonné sans savoir quel moteur,
+  quel ORM, ni si une transaction est ouverte.
+</p>
+
+<h2>Un dépôt est une collection</h2>
+
+<p>
+  Le mot est littéral. Un dépôt se comporte comme une collection d’agrégats en mémoire : on en
+  prend un, on en ajoute un, on enregistre ce qu’on a. Pas de query builder, pas de fragment
+  SQL, pas de proxy de chargement paresseux qui traverse la frontière.
+</p>
+
+<CodeTabs
+  title="Port"
+  tabs={[{ label: 'PHP', lang: 'php', code: phpPort }]}
+/>
+
+<p>
+  Le port n’a pas de <code>findByEmailLikedSince</code>. Les objets de requête existent pour
+  les rapports ; le dépôt répond au besoin d’agrégats des cas d’usage.
+</p>
+
+<h2>Objets simples</h2>
+
+<p>
+  Les entités sont POPO, POCO, POJO — l’acronyme est la seule chose qui change. Égalité par
+  identité, état privé, comportement public, et l’objet ignore qu’il est persisté.
+</p>
+
+<CodeTabs
+  title="Valeur immuable"
+  tabs={[{ label: 'TypeScript', lang: 'ts', code: tsValue }]}
+/>
+
+<Note label="Règle pratique" variant="rule">
+  <p>
+    Si un fichier du domaine contient une annotation, un attribut, une classe de base ou un
+    indice de sérialisation, l’infrastructure parle. Déplacez-le dans une classe de mappage.
+  </p>
+</Note>
+
+<h2>Le mappage appartient à la frontière</h2>
+
+<p>
+  Deux modèles, deux travaux. Le modèle de domaine protège les invariants ; celui de
+  persistance protège un schéma. Ils commencent souvent identiques et doivent pouvoir
+  diverger — la classe de mappage est l’endroit où cette divergence a le droit d’exister.
+</p>
+
+<p>
+  En C# avec EF Core, une classe de configuration de <code>DbContext</code>. En Java avec JPA,
+  un mapper ou une entité séparée. En C++ avec un store manuel, une fonction de mappage. En
+  PHP avec Doctrine, un mappage XML/YAML ou des attributs hors du namespace du domaine.
+</p>
+
+<h2>Les transactions sont de l’infrastructure</h2>
+
+<p>
+  Un cas d’usage dit « enregistrez ces deux comptes ensemble » ; que cela devienne
+  <code>BEGIN/COMMIT</code>, unit of work ou saga est une décision de l’adaptateur. Si le
+  domaine appelle <code>beginTransaction()</code>, la base est devenue une règle métier.
+</p>
+
+<h2>L’implémentation en mémoire</h2>
+
+<p>
+  Écrivez-la dès le premier jour. C’est la preuve la moins chère que le port est honnête et que
+  le cas d’usage est libre d’infrastructure.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Langage</th><th>Détail de persistance</th><th>Où il appartient</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td>Doctrine EntityManager, PDO</td><td><code>Infrastructure/</code></td></tr>
+      <tr><td>C#</td><td>DbContext, Dapper, migrations EF</td><td>projet adaptateur</td></tr>
+      <tr><td>Java</td><td>JPA EntityManager, JDBC</td><td>module <code>infrastructure</code></td></tr>
+      <tr><td>C++</td><td>client SQL, pool de connexions</td><td>unité de traduction de l’adaptateur</td></tr>
+      <tr><td>TypeScript</td><td>Prisma, TypeORM, driver SQL</td><td>paquet <code>infrastructure</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Ce que le silence achète</h2>
+
+<ul>
+  <li>Des tests unitaires en millisecondes, sans conteneur de base.</li>
+  <li>La capacité de changer de moteur sans toucher au domaine.</li>
+  <li>Des erreurs qui signifient quelque chose : <code>InsufficientFunds</code>, pas <code>SQLSTATE[23000]</code>.</li>
+  <li>Un domaine lisible par quelqu’un qui n’a jamais vu le schéma.</li>
+</ul>
+
+<Note label="Objection courante" variant="warn">
+  <p>
+    « Deux modèles, c’est de la duplication. » C’est de la duplication au sens où la ceinture
+    de sécurité est une friction. Dès que le schéma a besoin d’une colonne que le domaine ne
+    devrait pas connaître, la duplication se rembourse.
+  </p>
+</Note>

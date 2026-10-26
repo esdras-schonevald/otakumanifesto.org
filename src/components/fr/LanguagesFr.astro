@@ -1,0 +1,160 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  La philosophie est neutre quant au langage ; le vocabulaire ne l’est pas. Chaque écosystème a
+  son nom pour l’objet-valeur, sa façon d’exprimer une collection et son outil pour prouver que
+  les dépendances pointent vers l’intérieur.
+</p>
+
+<h2>Les mêmes concepts, cinq vocabulaires</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>Concept</th><th>PHP</th><th>C#</th><th>Java</th><th>C++</th><th>TypeScript</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Objet-valeur</td>
+        <td><code>final class</code> + constructeur privé</td>
+        <td><code>record</code> ou <code>sealed class</code></td>
+        <td><code>record</code></td>
+        <td><code>class</code> + <code>operator==</code></td>
+        <td><code>class</code> + constructeur privé</td>
+      </tr>
+      <tr>
+        <td>Collection de première classe</td>
+        <td>classe enveloppant <code>array</code></td>
+        <td>classe enveloppant <code>IReadOnlyList&lt;T&gt;</code></td>
+        <td>classe enveloppant <code>List&lt;T&gt;</code></td>
+        <td>classe enveloppant <code>std::vector&lt;T&gt;</code></td>
+        <td>classe enveloppant <code>readonly T[]</code></td>
+      </tr>
+      <tr>
+        <td>Contrat</td>
+        <td><code>interface</code></td>
+        <td><code>interface</code></td>
+        <td><code>interface</code></td>
+        <td>classe abstraite, virtuelle pure</td>
+        <td><code>interface</code></td>
+      </tr>
+      <tr>
+        <td>Échec de domaine</td>
+        <td>exception étendant <code>DomainException</code></td>
+        <td>exception ou <code>Result&lt;T&gt;</code></td>
+        <td>exception non vérifiée</td>
+        <td>exception ou <code>std::expected</code></td>
+        <td>exception ou union <code>Result&lt;T&gt;</code></td>
+      </tr>
+      <tr>
+        <td>Frontière de paquet</td>
+        <td>paquet Composer</td>
+        <td>paquet/projet NuGet</td>
+        <td>module Maven</td>
+        <td>cible CMake / paquet Conan</td>
+        <td>workspace npm (npm/pnpm)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>PHP</h2>
+
+<p>
+  L’implémentation de référence, et le langage où OTAKU a été appliqué en premier. Les attributs
+  remplacent les annotations ; <code>declare(strict_types=1)</code> est obligatoire ; une classe
+  ne ferme jamais la balise PHP.
+</p>
+
+<ul>
+  <li><strong>Objets-valeurs :</strong> <code>final class</code>, constructeur privé, constructeurs nommés.</li>
+  <li><strong>Collections :</strong> une classe avec un champ tableau et du comportement — jamais <code>array</code> brut dans une signature.</li>
+  <li><strong>Ports :</strong> interfaces dans le namespace du domaine ; adaptateurs dans <code>Infrastructure</code>.</li>
+  <li><strong>Outils :</strong> PHP_CodeSniffer, PHPStan/Psalm, deptrac, PHPUnit, Infection.</li>
+</ul>
+
+<h2>C#</h2>
+
+<p>
+  C# offre <code>record</code>, <code>init</code> et <code>required</code>, ce qui rend les
+  objets-valeurs presque gratuits. Le risque est l’inverse de PHP : il est facile de tout
+  transformer en record et de perdre le comportement.
+</p>
+
+<ul>
+  <li><strong>Objets-valeurs :</strong> <code>sealed record</code> avec constructeur validant, ou <code>sealed class</code> avec <code>IEquatable&lt;T&gt;</code>.</li>
+  <li><strong>Collections :</strong> enveloppez <code>IReadOnlyList&lt;T&gt;</code> ; exposez du comportement, pas <code>IEnumerable</code>.</li>
+  <li><strong>Ports :</strong> interfaces dans le projet domaine ; adaptateurs dans un projet infrastructure sans référence retour.</li>
+  <li><strong>Outils :</strong> analyseurs Roslyn, StyleCop, NetArchTest, <code>dotnet test</code>.</li>
+</ul>
+
+<h2>Java</h2>
+
+<p>
+  <code>record</code> couvre le cas de l’objet-valeur ; la difficulté, ce sont les frontières de
+  module, car le défaut de Maven est un classpath unique où tout voit tout.
+</p>
+
+<ul>
+  <li><strong>Objets-valeurs :</strong> <code>record</code> avec constructeur compact qui valide.</li>
+  <li><strong>Collections :</strong> enveloppez <code>List&lt;T&gt;</code> et ne renvoyez jamais la liste interne.</li>
+  <li><strong>Ports :</strong> interfaces dans le paquet domaine ; ArchUnit garantit que le domaine n’importe pas l’infrastructure.</li>
+  <li><strong>Outils :</strong> Checkstyle, PMD, ArchUnit, <code>jdeps</code>, JUnit 5.</li>
+</ul>
+
+<h2>C++</h2>
+
+<p>
+  Le langage le plus honnête sur les coûts et le plus strict sur la propriété. Ni réflexion ni
+  framework où se cacher — ce qui rend OTAKU plus facile à appliquer et plus difficile à
+  simuler.
+</p>
+
+<ul>
+  <li><strong>Objets-valeurs :</strong> classe à état privé et <code>operator==</code> par défaut ; passage par valeur ou <code>const&amp;</code>.</li>
+  <li><strong>Collections :</strong> enveloppez <code>std::vector&lt;T&gt;</code> ; n’exposez des itérateurs que si l’invariant survit.</li>
+  <li><strong>Ports :</strong> classe abstraite à méthodes virtuelles pures et destructeur virtuel ; aucune implémentation dans le header.</li>
+  <li><strong>Outils :</strong> clang-tidy, include-what-you-use, visibilité des cibles CMake, sanitizers, <code>std::expected</code>.</li>
+</ul>
+
+<h2>TypeScript</h2>
+
+<p>
+  TypeScript est le cinquième langage du guide pour une raison pratique : c’est là que s’écrit
+  aujourd’hui la majorité du code orienté objet, et il a tout ce dont la philosophie a besoin —
+  classes, interfaces, génériques, exceptions et un gestionnaire de paquets. Deux règles sont
+  faciles à casser et demandent de l’attention.
+</p>
+
+<ul>
+  <li><strong>Objets-valeurs :</strong> classe à constructeur privé et fabrique statique, car <code>readonly</code> seul ne valide pas.</li>
+  <li><strong>Collections :</strong> enveloppez <code>readonly T[]</code> ; ne renvoyez jamais le tableau interne.</li>
+  <li><strong>Contrats :</strong> <code>interface</code> pour les ports ; gardez les types d’infrastructure hors des signatures du domaine.</li>
+  <li><strong>Piège — typage structurel :</strong> deux formes identiques sont interchangeables. Ajoutez une marque (<code>declare const brand: unique symbol</code>) quand l’identité compte.</li>
+  <li><strong>Piège — <code>any</code> :</strong> c’est l’équivalent local de <code>mixed</code>. La règle 38 s’applique : uniquement aux frontières explicites de sérialisation.</li>
+  <li><strong>Outils :</strong> ESLint <code>complexity</code> et <code>max-lines-per-function</code>, <code>tsc --strict</code>, <code>ts-arch</code>, Vitest.</li>
+</ul>
+
+<Note label="Recommandation">
+  <p>
+    <strong>Kotlin</strong> et <strong>Swift</strong> héritent respectivement des conseils de
+    Java et de C++ : mêmes règles, ponctuation différente. Ils n’ont pas encore besoin d’un
+    chapitre propre — les règles ne changent pas.
+  </p>
+</Note>
+
+<h2>Ce qui ne se traduit pas</h2>
+
+<ul>
+  <li><strong>Annotations/attributs</strong> n’ont pas d’équivalent en C++ ; dans les trois autres, ils sont de l’infrastructure et appartiennent hors du domaine.</li>
+  <li><strong>Ramasse-miettes contre propriété</strong> change la façon de copier les agrégats, pas de les concevoir.</li>
+  <li><strong>Exceptions contre types de résultat</strong> change la signature de l’échec, pas la règle selon laquelle l’échec doit être explicite.</li>
+  <li><strong>Gestionnaires de paquets</strong> diffèrent dans la déclaration d’un assemblage ; le concept « pas de logique, seulement des dépendances » non.</li>
+</ul>
+
+<p>
+  Si votre langage peut exprimer une classe, une interface et un paquet, la philosophie
+  s’applique. Sinon, dites-le — et ne faites pas semblant.
+</p>

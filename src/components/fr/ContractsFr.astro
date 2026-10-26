@@ -1,0 +1,164 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const openapi = String.raw`openapi: 3.1.0
+info:
+  title: Accounts
+  version: 1.4.0
+paths:
+  /accounts/{id}/withdrawals:
+    post:
+      operationId: withdraw
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, currency]
+              properties:
+                amount: { type: integer, minimum: 1 }
+                currency: { type: string, enum: [BRL, USD] }
+      responses:
+        "201":
+          description: Retrait accepté
+        "409":
+          description: Solde insuffisant`;
+
+const phpContract = String.raw`namespace App\Domain\Account;
+
+final class Withdrawal
+{
+    private function __construct(
+        private AccountId $account,
+        private Money $amount,
+    ) {}
+
+    public static function fromRequest(AccountId $account, Money $amount): self
+    {
+        if ($amount->isNegative()) {
+            throw new InvalidWithdrawalAmount($amount);
+        }
+
+        return new self($account, $amount);
+    }
+}`;
+---
+
+<p class="lede">
+  Deux systèmes s’intègrent sur un contrat, pas sur une classe. Le contrat est la partie qu’on
+  ne peut pas changer à la légère, et le langage qu’il contient est la partie que l’expert
+  métier doit reconnaître.
+</p>
+
+<h2>Langage omniprésent</h2>
+
+<p>
+  Si l’expert dit « règlement », le code ne dit pas <code>PaymentResult</code>. Les noms ne
+  sont pas cosmétiques : un nom faux impose une couche de traduction dans la tête de quelqu’un,
+  et c’est là que les exigences se perdent.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Le métier dit</th><th>Le code dit</th><th>Pourquoi ça fait mal</th></tr></thead>
+    <tbody>
+      <tr><td>règlement</td><td><code>PaymentResult</code></td><td>Deux noms pour un concept ; rapports et code divergent</td></tr>
+      <tr><td>chargeback</td><td><code>refund</code></td><td>Des cycles de vie différents fusionnés en un type</td></tr>
+      <tr><td>titulaire</td><td><code>user</code></td><td>« User » fait fuiter un acteur technique dans une règle financière</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  Le test est mécanique : lisez un cas d’usage à voix haute à l’expert. Quand il vous
+  interrompt pour corriger un mot, le code est faux.
+</p>
+
+<h2>Design d’abord</h2>
+
+<p>
+  Le contrat s’écrit avant l’implémentation. C’est l’artefact sur lequel deux équipes peuvent
+  se disputer à moindre coût, et celui qui survit à une réécriture.
+</p>
+
+<CodeTabs
+  title="OpenAPI 3.1 — la promesse"
+  tabs={[{ label: 'openapi.yaml', lang: 'yaml', code: openapi }]}
+/>
+
+<p>
+  Remarquez ce que le contrat <strong>ne</strong> contient pas : noms de classes, colonnes de
+  base, annotations de framework. Il décrit des ressources, des verbes et des modes d’échec —
+  le même vocabulaire que le métier.
+</p>
+
+<h2>Le contrat dans le code</h2>
+
+<CodeTabs
+  title="La validation appartient au concept"
+  tabs={[{ label: 'PHP', lang: 'php', code: phpContract }]}
+/>
+
+<p>
+  L’objet de requête n’est pas un sac de DTO. C’est le plus petit type qui représente un
+  retrait valide — et le seul endroit où « le montant doit être positif » a le droit de vivre.
+</p>
+
+<h2>Règles de compatibilité</h2>
+
+<ul>
+  <li><strong>Additif uniquement.</strong> Champs optionnels nouveaux et endpoints nouveaux sont sûrs ; renommer et supprimer cassent.</li>
+  <li><strong>Ne réutilisez jamais un nom de champ</strong> avec un autre sens. C’est une rupture silencieuse.</li>
+  <li><strong>Versionez le contrat, pas la classe.</strong> Version sémantique sur l’API, pas sur un namespace interne.</li>
+  <li><strong>Dépréciez avant de supprimer.</strong> Annoncez, avertissez dans les réponses, puis retirez — dans cet ordre.</li>
+  <li><strong>Le format d’erreur fait partie du contrat.</strong> Un <code>409</code> avec un corps non documenté est une promesse rompue.</li>
+</ul>
+
+<h2>Testez la promesse, pas l’implémentation</h2>
+
+<p>
+  Les tests de contrat vérifient que l’implémentation honore encore le document : validation de
+  schéma des réponses, tests orientés consommateur (Pact) et une étape CI qui compare la spec
+  publiée à la précédente et échoue sur les changements cassants.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Langage</th><th>Outils de contrat</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td>validateurs OpenAPI, <code>league/openapi-psr7-validator</code>, Pact PHP</td></tr>
+      <tr><td>C#</td><td>NSwag, Microsoft.OpenApi, Pact .NET</td></tr>
+      <tr><td>Java</td><td>springdoc-openapi, Pact JVM</td></tr>
+      <tr><td>C++</td><td>validation de spec en tests d’intégration, Pact via binding</td></tr>
+      <tr><td>TypeScript</td><td>zod/valibot à partir de la spec, Pact JS</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<Note label="La règle" variant="rule">
+  <p>
+    Si le code ne se lit pas comme parle l’expert métier, ou si le contrat est contourné, le
+    système est cassé.
+  </p>
+</Note>
+
+<h2>Contourner est l’échec par défaut</h2>
+
+<p>
+  Les contrats sont rarement rompus par un mauvais design — ils sont contournés par
+  commodité : un service qui lit la base de l’autre, un client qui accède à un endpoint
+  interne, un champ « temporaire » créé directement en production. Chaque contournement est une
+  seconde source de vérité, et deux sources de vérité ne restent jamais égales longtemps.
+</p>
+
+<p>
+  La contre-mesure est sociale avant d’être technique : le contrat doit être la seule porte, et
+  la porte doit être moins chère à utiliser que le mur.
+</p>

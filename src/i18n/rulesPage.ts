@@ -8,7 +8,7 @@ interface RulesPageCopy {
   outro: string;
 }
 
-export const rulesPage: Record<'pt-br' | 'es', RulesPageCopy> = {
+export const rulesPage: Record<'pt-br' | 'es' | 'fr', RulesPageCopy> = {
   'pt-br': {
     title: 'As quarenta regras',
     kicker: 'Trilha O — Domine sua Disciplina',
@@ -27,8 +27,19 @@ export const rulesPage: Record<'pt-br' | 'es', RulesPageCopy> = {
     outro:
       'En caso de duda, elige la opción más restrictiva. Es el criterio de desempate que prescribe la filosofía.',
   },
+
+  fr: {
+    title: 'Les quarante règles',
+    kicker: 'Piste O — Maîtrise ta Discipline',
+    lede: 'Quarante règles, chacune avec un seuil. Elles sont mécaniques pour une raison : une règle qui dépend du goût ne peut être ni revue, ni automatisée, ni discutée.',
+    intro:
+      '<strong>Complexité cyclomatique ≤ 5 par méthode</strong> est la métrique principale. Elle compte les chemins indépendants que le lecteur doit tenir à la fois : chaque branche, boucle et opérateur booléen en ajoute un. Le reste de la discipline existe pour garder ce nombre bas. Chaque règle a sa propre page avec but, concept, problème et solution.',
+    outro:
+      'En cas de doute, choisissez l’option la plus restrictive. C’est le critère de départage que prescrit la philosophie.',
+  },
 };
 
 export function rulesPageFor(locale: Locale): RulesPageCopy {
+  if (locale === 'fr') return rulesPage.fr;
   return locale === 'es' ? rulesPage.es : rulesPage['pt-br'];
 }

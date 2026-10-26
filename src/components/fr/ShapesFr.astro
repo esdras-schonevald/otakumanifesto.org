@@ -1,0 +1,152 @@
+---
+import Note from '../Note.astro';
+---
+
+<p class="lede">
+  La modularité ne se révise pas après coup — elle s’impose par la forme du dépôt. Chaque
+  dépôt doit correspondre exactement à l’un des trois archétypes. Il n’y a pas de quatrième
+  option ni d’hybride.
+</p>
+
+<h2>1 — Atome</h2>
+
+<p>
+  La plus petite unité de granularité possible. Si un composant peut être découpé davantage,
+  ce n’est pas un atome.
+</p>
+
+<ul>
+  <li><strong>Structure :</strong> plate. Un seul niveau de répertoire à la racine du code.</li>
+  <li><strong>Règle :</strong> aucune subdivision. Il remplit un contrat précis.</li>
+  <li><strong>Test :</strong> pouvez-vous le décrire en une phrase sans « et » ?</li>
+  <li><strong>Exemples :</strong> un objet-valeur, un utilitaire de chaîne, un client HTTP unique.</li>
+</ul>
+
+<h2>2 — Assemblage</h2>
+
+<p>
+  Un point de connexion. Les assemblages ne contiennent pas de logique ; ils orchestrent
+  l’union d’atomes pour qu’une seule déclaration de dépendance installe dix paquets.
+</p>
+
+<ul>
+  <li><strong>Structure :</strong> aucun code source. La composition est déclarée dans le manifeste du paquet.</li>
+  <li><strong>Règle :</strong> s’il a du comportement, ce n’est pas un assemblage.</li>
+  <li><strong>Test :</strong> supprimez le manifeste et il ne reste qu’un README ?</li>
+  <li><strong>Exemples :</strong> un méta-paquet qui regroupe les atomes HTTP, un bundle « commons ».</li>
+</ul>
+
+<h2>3 — Application</h2>
+
+<p>
+  Le système vivant. Pas une bibliothèque : l’implémentation du cœur du métier, suivant Clean
+  Architecture et DDD.
+</p>
+
+<ul>
+  <li><strong>Structure :</strong> domaine, application, infrastructure, interface — dépendances vers l’intérieur.</li>
+  <li><strong>Règle :</strong> restez mince. Tout ce qui est générique descend dans les atomes.</li>
+  <li><strong>Test :</strong> contient-elle un cas d’usage qu’un expert métier reconnaîtrait ?</li>
+  <li><strong>Exemples :</strong> une passerelle de paiement, un service d’identité.</li>
+</ul>
+
+<h2>La même idée dans quatre écosystèmes</h2>
+
+<p>Les noms des artefacts changent ; les formes non.</p>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>Forme</th><th>PHP / Composer</th><th>C# / NuGet</th><th>Java / Maven</th><th>C++ / Conan</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Atome</strong></td>
+        <td><code>type: library</code>, un namespace</td>
+        <td>class library, un namespace</td>
+        <td>jar, un paquet</td>
+        <td>header + library, un namespace</td>
+      </tr>
+      <tr>
+        <td><strong>Assemblage</strong></td>
+        <td><code>type: metapackage</code>, seulement <code>require</code></td>
+        <td>paquet sans code, seulement <code>PackageReference</code></td>
+        <td>pom avec uniquement <code>&lt;dependency&gt;</code></td>
+        <td>conanfile qui ne fait que <code>requires</code></td>
+      </tr>
+      <tr>
+        <td><strong>Application</strong></td>
+        <td><code>type: project</code>, <code>src/Domain</code>, <code>src/Application</code>…</td>
+        <td>projet exécutable avec couches</td>
+        <td>app avec modules de couche</td>
+        <td>cible exécutable avec couches</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Comment classer un dépôt</h2>
+
+<p>Posez les trois questions dans l’ordre et arrêtez-vous au premier « oui ».</p>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Question</th><th>Si oui</th></tr></thead>
+    <tbody>
+      <tr><td>Contient-il des cas d’usage et des règles métier ?</td><td>Application</td></tr>
+      <tr><td>Contient-il uniquement des déclarations de dépendances ?</td><td>Assemblage</td></tr>
+      <tr><td>Tient-il en une phrase avec une responsabilité ?</td><td>Atome</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  Si aucune réponse n’est « oui », le dépôt n’est pas encore prêt à exister. Ce n’est pas un
+  jugement esthétique : c’est le signal que la frontière n’a pas encore été trouvée.
+</p>
+
+<h2>Pourquoi trois, et pas plus</h2>
+
+<p>
+  Plus de formes signifie plus d’endroits où se cacher. Un quatrième archétype — « utilitaires
+  partagés », « common », « core » — devient toujours l’endroit où s’accumulent des choses
+  sans rapport, jusqu’à ce que personne ne puisse plus rien supprimer.
+</p>
+
+<p>
+  Trois formes donnent aussi une règle mécanique pour les fuites : du code qui appartient à un
+  atome mais vit dans une application finit copié dans une autre application. La taxonomie le
+  rend visible en revue, car le relecteur pose une seule question : <em>ce fichier appartient-il
+  à cette forme ?</em>
+</p>
+
+<Note label="Anti-patron" variant="warn">
+  <p>
+    Un dépôt nommé <code>utils</code>, <code>shared</code> ou <code>core</code> avec plus d’une
+    responsabilité. Ce n’est pas un assemblage (il a de la logique) ni un atome (il fait
+    plusieurs choses). C’est la forme qu’OTAKU élimine.
+  </p>
+</Note>
+
+<h2>Imposition</h2>
+
+<p>
+  Une taxonomie qui vit dans un document est une suggestion. Pour l’imposer, mettez la forme
+  dans des métadonnées lisibles par machine et vérifiez-la en CI :
+</p>
+
+<ul>
+  <li><strong>PHP :</strong> <code>composer.json</code> → <code>type</code> doit être <code>library</code>, <code>metapackage</code> ou <code>project</code>.</li>
+  <li><strong>C# :</strong> un assemblage ne peut pas avoir de fichiers <code>.cs</code>.</li>
+  <li><strong>Java :</strong> un module d’assemblage doit avoir <code>src/main/java</code> vide.</li>
+  <li><strong>C++ :</strong> un assemblage est headers-only ou absent ; le <code>conanfile</code> déclare <code>requires</code> et aucun <code>sources()</code>.</li>
+</ul>
+
+<p>
+  Pour la forme application, la vérification est structurelle : assurez-vous que la couche
+  domaine n’importe ni infrastructure, ni framework, ni base de données. Chaque écosystème a
+  un outil — <code>deptrac</code> (PHP), <code>NetArchTest</code> (C#), <code>ArchUnit</code>
+  (Java), règles de cible CMake (C++).
+</p>
+
+<p><a href="/fr/guide/">Continuer vers le guide →</a></p>

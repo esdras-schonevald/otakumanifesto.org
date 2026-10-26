@@ -1,0 +1,130 @@
+---
+import CodeTabs from '../CodeTabs.astro';
+import Note from '../Note.astro';
+
+const phpEntity = String.raw`namespace App\Domain\Account;
+
+final class Account
+{
+    private function __construct(
+        private AccountId $id,
+        private Money $balance,
+    ) {}
+
+    public function withdraw(Money $amount): self
+    {
+        if ($this->balance->isLessThan($amount)) {
+            throw new InsufficientFunds($this->id);
+        }
+
+        return new self($this->id, $this->balance->subtract($amount));
+    }
+}`;
+
+const tsPorts = String.raw`export interface Accounts {
+  get(id: AccountId): Account;
+  save(...accounts: Account[]): void;
+}
+
+export interface Ledger {
+  record(transfer: Transfer): Receipt;
+}`;
+---
+
+<p class="lede">
+  Le domaine est la seule partie du système qui ne peut pas être remplacée. Le blindage ne
+  consiste pas à le cacher — mais à garantir que rien d’autre ne dicte sa forme.
+</p>
+
+<h2>La règle de dépendance</h2>
+
+<p>
+  Les dépendances de code source pointent vers l’intérieur. Rien dans un cercle interne ne
+  peut connaître le nom de quelque chose dans un cercle externe : ni une classe, ni une
+  annotation, ni une interface de framework, ni un type de base de données.
+</p>
+
+<pre><code>Interface  ──▶  Application  ──▶  Domain
+Infrastructure ──────────────────▶  Domain</code></pre>
+
+<p>
+  Les flèches sont des imports à la compilation. Si <code>Domain/Account.php</code> importe
+  <code>Doctrine\ORM\Mapping\Entity</code>, la flèche pointe du mauvais côté et le framework
+  devient propriétaire de vos règles métier.
+</p>
+
+<h2>Ports et adaptateurs</h2>
+
+<p>
+  Le domaine déclare ce dont il a besoin comme un port. L’infrastructure l’implémente comme un
+  adaptateur. Le domaine garde le vocabulaire ; l’adaptateur garde le fournisseur.
+</p>
+
+<CodeTabs
+  title="Le même port, deux langages"
+  tabs={[{ label: 'TypeScript', lang: 'ts', code: tsPorts }]}
+/>
+
+<p>
+  En PHP, C# et Java la forme est la même avec <code>interface</code> ; en C++, une classe
+  abstraite avec destructeur virtuel. L’important est que le contrat appartienne au domaine et
+  ne porte aucun détail.
+</p>
+
+<h2>Une entité qui ne sait rien</h2>
+
+<CodeTabs
+  title="Entité"
+  tabs={[{ label: 'PHP', lang: 'php', code: phpEntity }]}
+/>
+
+<p>
+  Sans annotation, sans classe de base, sans active record. L’entité peut être construite dans
+  un test unitaire sans base de données, sans conteneur et sans démarrer un framework.
+</p>
+
+<h2>Les anti-patterns</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Symptôme</th><th>Ce que cela signifie</th><th>Correctif</th></tr></thead>
+    <tbody>
+      <tr><td>L’entité étend une classe de base du framework</td><td>Le framework possède le cycle de vie</td><td>Objet simple + mappage dans l’adaptateur</td></tr>
+      <tr><td>Le domaine importe <code>EntityManager</code>, <code>DbContext</code>, <code>Session</code></td><td>La persistance est dans le noyau</td><td>Port de dépôt dans le domaine</td></tr>
+      <tr><td>Annotations de validation sur les champs du domaine</td><td>Les règles de transport sont devenues des règles métier</td><td>Valider dans le cas d’usage ou l’objet-valeur</td></tr>
+      <tr><td>Le domaine lève des exceptions HTTP</td><td>L’adaptateur a fui vers l’intérieur</td><td>Exceptions de domaine + mappage au bord</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Faites de la flèche un échec de build</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Langage</th><th>Test d’architecture</th></tr></thead>
+    <tbody>
+      <tr><td>PHP</td><td><code>deptrac</code>, règles PHPStan personnalisées</td></tr>
+      <tr><td>C#</td><td><code>NetArchTest</code>, NDepend</td></tr>
+      <tr><td>Java</td><td><code>ArchUnit</code></td></tr>
+      <tr><td>C++</td><td>règles de dépendance par cible CMake, <code>include-what-you-use</code></td></tr>
+      <tr><td>TypeScript</td><td><code>ts-arch</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<Note label="Migration" variant="warn">
+  <p>
+    Vous n’avez pas besoin d’arrêter le monde. Extrayez d’abord le cas d’usage, donnez-lui des
+    ports, puis déplacez les appels à l’ORM vers des adaptateurs, un par un. Le compilateur et
+    le test d’architecture vous préviennent quand la flèche pointe enfin vers l’intérieur.
+  </p>
+</Note>
+
+<h2>Ce que « blinder » n’est pas</h2>
+
+<p>
+  Ce n’est pas une structure de quatre dossiers avec le même modèle copié quatre fois. Si
+  l’entité de domaine et celle de la base sont identiques, la frontière est cérémoniale —
+  vous avez déplacé du code, pas des dépendances. Le test est le graphe d’imports, pas
+  l’arborescence.
+</p>
